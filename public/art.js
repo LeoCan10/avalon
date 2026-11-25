@@ -169,7 +169,7 @@
   // Íconos chicos
   const icon = {
     crown: `<svg viewBox="0 0 24 24" class="ico"><path d="M3 18L2 7l5 4 5-7 5 7 5-4-1 11z" fill="${GOLD}" stroke="${GOLD_D}"/></svg>`,
-    sword: `<svg viewBox="0 0 24 24" class="ico"><path d="M15 3h6v6L10 20l-2-2-3 3-2-2 3-3-2-2z" fill="#cfd3d8" stroke="#555"/></svg>`,
+    sword: `<svg viewBox="0 0 24 24" class="ico"><path d="M20.5 2.5L21.5 3.5L12 13L11 12Z" fill="#dfe3e8" stroke="#6b7078" stroke-width=".8"/><path d="M8.5 10.5L13.5 15.5" stroke="#b8862b" stroke-width="2.4" stroke-linecap="round"/><path d="M10.5 13.5L6.5 17.5" stroke="#5b3a1e" stroke-width="2.2" stroke-linecap="round"/><circle cx="5.5" cy="18.5" r="1.8" fill="#b8862b"/></svg>`,
     quill: `<svg viewBox="0 0 24 24" class="ico"><path d="M20 2C10 4 6 10 4 20l2 1c2-6 6-10 10-12-3 0-5 1-7 2 3-4 7-7 11-9z" fill="#3a2410"/></svg>`,
   };
 

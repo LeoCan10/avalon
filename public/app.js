@@ -223,7 +223,7 @@ function roleOverlay(el, close, intro, demoMe) {
   const tap = el.querySelector('.tap');
   flip.onclick = () => {
     const open = flip.classList.toggle('open');
-    el.className = 'overlay' + (open ? ' role-' + me.role : '');
+    el.className = 'overlay' + (open ? ' opened role-' + me.role : '');
     fx.innerHTML = open ? particles(ROLE_PARTICLES[me.role], me.role === 'oberon' || me.role === 'morgana' ? 18 : 30) : '';
     tap.textContent = open ? 'Tocá la carta para ocultarla' : 'Tocá la carta para revelarla';
     SFX.flip();
@@ -299,12 +299,13 @@ function endOverlay(el, close, g) {
 function render() {
   $fab.innerHTML = '';
   renderAudioControls();
+  document.body.dataset.screen = !S ? (showGallery ? 'gallery' : 'home') : !S.game ? 'lobby' : 'game';
   if (!S && showGallery) return renderGallery();
   if (!S) return renderHome();
   if (!S.game) return renderLobby();
   renderGame();
 }
-const setFab = (html) => ($fab.innerHTML = `<div class="fab"><div class="inner">${html}</div></div>`);
+const setFab = (html) => ($fab.innerHTML = `<div class="fab">${html}</div>`);
 
 // ---- Botones de música y sonido (fijos arriba a la derecha) ----
 const ICON_MUSIC = `<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="17.5" cy="16" r="2.8" fill="currentColor"/></svg>`;
@@ -378,18 +379,32 @@ function renderGallery() {
       <div class="gal-extra"><span class="qcard">${ART.questCard(true)}</span><span class="qcard">${ART.questCard(false)}</span>
         <span class="seals">${ART.seal(true)}${ART.seal(false)}</span></div>
     </div>`;
-  document.getElementById('back').onclick = () => { SFX.click(); showGallery = false; scrollTo(0, 0); render(); };
+  document.getElementById('back').onclick = () => { SFX.click(); showGallery = false; render(); $app.scrollTop = 0; };
   document.querySelectorAll('[data-role]').forEach((b) => (b.onclick = () => { SFX.click(); queueOverlay((el, c) => roleOverlay(el, c, false, demoMe(b.dataset.role))); }));
   document.querySelectorAll('[data-demo]').forEach((b) => (b.onclick = () => { SFX.click(); DEMOS[b.dataset.demo](); }));
 }
 
 function rulesHtml() {
-  return `<div class="small" style="margin-top:10px">
+  return `<div class="rules">
     <p>Los jugadores se dividen en <b>leales a Arturo</b> y <b>secuaces de Mordred</b>. Los malvados se conocen entre sí; los leales no saben nada, salvo Merlín.</p>
     <p>Hay cinco misiones. En cada ronda el líder propone un equipo y todos votan. Si la mayoría aprueba, el equipo parte; si no, el liderazgo pasa al siguiente. <b>Cinco rechazos seguidos y gana el mal.</b></p>
     <p>En la misión, cada integrante juega en secreto Éxito o Fracaso; los leales sólo pueden jugar Éxito. Un Fracaso basta para que la misión falle (en la cuarta, con siete o más jugadores, hacen falta dos).</p>
     <p>Gana el primer bando en sumar tres misiones… pero si gana el bien, el Asesino tiene una última chance: si adivina quién es Merlín, gana el mal.</p></div>`;
 }
+
+// Ventana con pergamino para información secundaria (reglas, registro de la partida)
+function infoOverlay(title, html) {
+  SFX.click();
+  queueOverlay((el, close) => {
+    el.innerHTML = `<div class="sheet scroll"><h2 class="center">${title}</h2>${rule}<div class="sheet-body">${html}</div>
+      <button class="btn dark" data-close style="margin-top:12px">Cerrar</button></div>`;
+    el.querySelector('[data-close]').onclick = close;
+    el.onclick = (e) => { if (e.target === el) close(); };
+  });
+}
+const showRules = () => infoOverlay('¿Cómo se juega?', rulesHtml());
+
+const ICON_RULES = `<svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6zM6 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 8h7M9 12h7M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
 function renderHome() {
   const code = (new URLSearchParams(location.search).get('sala') || '').toUpperCase();
@@ -398,27 +413,31 @@ function renderHome() {
     <div class="hero">${ART.castle}</div>
     <div class="center"><div class="title">Avalon</div><div class="tagline">Lealtad y traición en la corte del Rey Arturo</div></div>
     <div class="scroll">
-      <label class="lbl" for="name">Tu nombre</label>
-      <input id="name" placeholder="Sir Lancelot…" maxlength="20" value="${esc(name)}" autocomplete="off" />
-      ${rule}
-      <label class="lbl" for="code">Código de la sala</label>
-      <input id="code" placeholder="KQRT" maxlength="4" value="${esc(code)}" autocomplete="off" style="text-transform:uppercase;letter-spacing:.3em;font-family:Cinzel,serif" />
-      <div style="height:12px"></div>
-      <button class="btn" id="join">Entrar a la sala</button>
+      <div class="row2">
+        <div><label class="lbl" for="name">Tu nombre</label><input id="name" placeholder="Sir Lancelot…" maxlength="20" value="${esc(name)}" autocomplete="off" /></div>
+        <div style="flex:0 0 38%"><label class="lbl" for="code">Sala</label><input id="code" placeholder="KQRT" maxlength="4" value="${esc(code)}" autocomplete="off" class="code-input" /></div>
+      </div>
+      <button class="btn" id="join" style="margin-top:12px">Entrar a la sala</button>
     </div>
-    <div class="or">— o bien —</div>
     <button class="btn dark" id="create">Fundar una sala nueva</button>
-    <div class="scroll peek" id="gallery" style="margin-top:26px"><span class="thumb">${ART.card('merlin')}</span>
-      <span><span class="cz" style="font-weight:800">Galería de personajes</span><br><span class="small muted it">Conocé todas las cartas y mirá cómo se juega, sin armar una partida</span></span></div>
-    <details class="scroll"><summary>¿Cómo se juega?</summary>${rulesHtml()}</details>`;
-  document.getElementById('gallery').onclick = () => { SFX.click(); showGallery = true; scrollTo(0, 0); render(); };
+    <div class="links">
+      <button class="link" id="gallery">${ART.card('merlin')}<span>Galería de personajes</span></button>
+      <button class="link" id="rules">${ICON_RULES}<span>¿Cómo se juega?</span></button>
+    </div>`;
   const getName = () => { const n = document.getElementById('name').value.trim(); store.set('avalon.name', n); return n; };
   document.getElementById('join').onclick = () => send('join', { name: getName(), code: document.getElementById('code').value });
   document.getElementById('create').onclick = () => send('create', { name: getName() });
+  document.getElementById('gallery').onclick = () => { SFX.click(); showGallery = true; render(); $app.scrollTop = 0; };
+  document.getElementById('rules').onclick = showRules;
 }
 
 function playerRow(p, extra = '', cls = '') {
-  return `<li class="${cls}" data-id="${p.id}">${ART.shield(p.name)}<span class="name">${esc(p.name)}${p.id === S.meId ? ' <span class="muted it">(vos)</span>' : ''}</span>${extra}</li>`;
+  const me = p.id === S.meId;
+  return `<li class="${cls}${me ? ' me' : ''}" data-id="${p.id}" ${me ? 'title="Vos"' : ''}>${ART.shield(p.name)}<span class="name">${esc(p.name)}</span>${extra}</li>`;
+}
+
+function topbar(right = '') {
+  return `<div class="topbar"><span class="deco">Avalon</span><span class="tb-btns">${right}</span></div>`;
 }
 
 function renderLobby() {
@@ -428,44 +447,39 @@ function renderLobby() {
   const evilN = EVIL_COUNT[Math.min(Math.max(n, 5), 10)];
   const link = location.origin + '/?sala=' + S.code;
   const opt = (k, label, desc) => `
-    <label class="toggle"><span class="mini">${ART.card(k)}</span><span class="txt"><span class="cz" style="font-weight:800">${label}</span><br><span class="small muted it">${desc}</span></span>
+    <label class="toggle"><span class="mini">${ART.card(k)}</span><span class="txt"><b class="cz">${label}</b><span class="small muted it">${desc}</span></span>
     <span class="switch"><input type="checkbox" data-opt="${k}" ${o[k] ? 'checked' : ''} ${isHost ? '' : 'disabled'}><span></span></span></label>`;
   $app.innerHTML = `
-    <div class="topbar"><span class="deco">Avalon</span><span class="night-muted small it">la corte se reúne</span></div>
-    <div class="scroll center">
-      <label class="lbl">Código de la sala</label>
-      <div class="code">${S.code}</div>
-      <button class="btn dark small" id="share">Compartir invitación</button>
+    ${topbar(`<button class="tb" id="rules" title="Reglas">${ICON_RULES}</button><button class="tb txt" id="leave">Salir</button>`)}
+    <div class="scroll code-row">
+      <div><span class="lbl">Sala</span><div class="code">${S.code}</div></div>
+      <button class="btn dark small" id="share">Invitar</button>
     </div>
     <div class="scroll">
       <h2>Caballeros reunidos <span class="muted">${n}/10</span></h2>
-      <ul class="players">${S.players.map((p) => playerRow(p,
-        (p.id === S.hostId ? `<span class="tag gold">${ART.icon.crown} anfitrión</span>` : '') +
+      <ul class="players grid">${S.players.map((p) => playerRow(p,
+        (p.id === S.hostId ? `<span class="ic" title="Anfitrión">${ART.icon.crown}</span>` : '') +
         (isHost && p.id !== S.meId ? `<button class="kick" data-kick="${p.id}" title="Echar">✕</button>` : ''))).join('')}</ul>
-      ${n < 5 ? `<div class="small muted it center" style="margin-top:10px">Faltan ${5 - n} para poder empezar</div>` : ''}
+      ${n < 5 ? `<div class="small muted it center" style="margin-top:6px">Faltan ${5 - n} para poder empezar</div>` : ''}
     </div>
     <div class="scroll">
-      <h2>Personajes</h2>
-      <div class="small muted it">Siempre juegan Merlín y el Asesino. Con ${Math.max(n, 5)} jugadores hay ${evilN} malvados.</div>
-      ${rule}
-      ${opt('percival', 'Percival', 'Ve a Merlín (y a Morgana, sin saber cuál es cuál)')}
-      ${opt('morgana', 'Morgana', 'Se hace pasar por Merlín ante Percival')}
+      <h2>Personajes <span class="small muted it" style="font-family:'IM Fell English';letter-spacing:0">· Merlín y Asesino siempre · ${evilN} malvados</span></h2>
+      ${opt('percival', 'Percival', 'Ve a Merlín (y a Morgana)')}
+      ${opt('morgana', 'Morgana', 'Se hace pasar por Merlín')}
       ${opt('mordred', 'Mordred', 'Invisible para Merlín')}
-      ${opt('oberon', 'Oberón', 'Malvado solitario: nadie lo conoce')}
-      ${!isHost ? '<div class="small muted it">Sólo el anfitrión elige los personajes.</div>' : ''}
-    </div>
-    <details class="scroll"><summary>¿Cómo se juega?</summary>${rulesHtml()}</details>
-    <button class="btn dark" id="leave" style="margin-top:8px">Abandonar la sala</button>`;
+      ${opt('oberon', 'Oberón', 'Malvado solitario')}
+    </div>`;
   setFab(isHost
     ? `<button class="btn" id="start" ${n < 5 || n > 10 ? 'disabled' : ''}>Comenzar la partida</button>`
-    : `<div class="wait">Esperando que el anfitrión comience…</div>`);
+    : `<div class="wait">Esperando que el anfitrión comience…${isHost ? '' : '<br><span class="small">Sólo el anfitrión elige los personajes.</span>'}</div>`);
 
   document.getElementById('share').onclick = async () => {
     try {
       if (navigator.share) await navigator.share({ title: 'Avalon', text: `Sumate a Avalon, sala ${S.code}`, url: link });
-      else { await navigator.clipboard.writeText(link); toast('Link copiado'); }
+      else { await navigator.clipboard.writeText(link); toast('Link copiado', true); }
     } catch {}
   };
+  document.getElementById('rules').onclick = showRules;
   document.querySelectorAll('[data-opt]').forEach((el) => (el.onchange = () => send('setOptions', { [el.dataset.opt]: el.checked })));
   document.querySelectorAll('[data-kick]').forEach((el) => (el.onclick = () => send('kick', el.dataset.kick)));
   document.getElementById('leave').onclick = async () => { await send('leave'); forgetRoom(); };
@@ -474,16 +488,37 @@ function renderLobby() {
 
 const ICON_OK = `<svg viewBox="0 0 24 24"><path d="M5 6h14c0 7-3 10-7 11-4-1-7-4-7-11z" fill="#f6e7bd"/><path d="M10 17h4v3h-4z" fill="#f6e7bd"/></svg>`;
 const ICON_KO = `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#f6e7bd" stroke-width="3" stroke-linecap="round"/></svg>`;
+const ICON_CHECK = `<svg viewBox="0 0 24 24" class="ico"><path d="M5 12l5 5 9-10" fill="none" stroke="#5a7a2a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ICON_LOG = `<svg viewBox="0 0 24 24"><path d="M5 4h12l2 2v14H5z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
 function boardHtml(g) {
   const quests = g.questSizes.map((size, i) => {
     const r = g.results[i];
     const cur = !r && i === g.questIdx && !['end', 'assassin'].includes(g.phase);
     const cls = r ? (r.success ? 'ok' : 'ko') : cur ? 'cur' : '';
-    return `<div class="quest ${cls}">${r ? (r.success ? ICON_OK : ICON_KO) : size}${g.failsNeeded[i] > 1 && !r ? '<span class="need">2 fracasos</span>' : ''}</div>`;
+    return `<div class="quest ${cls}">${r ? (r.success ? ICON_OK : ICON_KO) : size}${g.failsNeeded[i] > 1 && !r ? '<span class="need">2 ✗</span>' : ''}</div>`;
   }).join('');
   const rej = [0, 1, 2, 3, 4].map((i) => `<i class="${i < g.rejections ? 'on' : ''} ${i === 4 && g.rejections === 4 ? 'danger' : ''}"></i>`).join('');
-  return `<div class="scroll"><div class="quests">${quests}</div><div class="rej">Rechazos ${rej}</div></div>`;
+  return `<div class="scroll board"><div class="quests">${quests}</div><div class="rej">Rechazos ${rej}</div></div>`;
+}
+
+// Registro de la partida: misiones jugadas, última votación y personajes en juego
+function showLog() {
+  const g = S.game;
+  const lv = g.lastVote;
+  const quests = g.results.length
+    ? g.results.map((r, i) => `<div class="log-row"><span class="tag ${r.success ? 'good' : 'evil'}">${i + 1} · ${r.success ? 'Éxito' : 'Fracaso'}</span><span class="small">${list(r.team)}${r.fails ? ` <i class="muted">(${r.fails} ✗)</i>` : ''}</span></div>`).join('')
+    : '<div class="small muted it">Todavía no hubo misiones.</div>';
+  const vote = lv
+    ? `<div class="small muted it" style="margin-bottom:6px">Equipo de ${nameOf(lv.leader)}: ${list(lv.team)} — ${lv.approved ? 'aprobado' : 'rechazado'}</div>
+       <div class="vote-grid">${g.order.map((id) => `<span>${nameOf(id)}</span><span class="tag ${lv.votes[id] ? 'good' : 'evil'}">${lv.votes[id] ? 'Aprueba' : 'Rechaza'}</span>`).join('')}</div>`
+    : '<div class="small muted it">Todavía no hubo votaciones.</div>';
+  const roles = Object.entries(g.rolesInPlay).map(([r, c]) => `${ROLE_NAMES[r]}${c > 1 ? ' ×' + c : ''}`).join(' · ');
+  infoOverlay('Registro', `
+    <h3>Misiones</h3>${quests}
+    <h3>Última votación</h3>${vote}
+    <h3>Personajes en juego</h3><div class="small">${roles}</div>
+    <div class="small muted it" style="margin-top:12px">Sala ${S.code}</div>`);
 }
 
 function renderGame() {
@@ -497,7 +532,7 @@ function renderGame() {
     case 'team': {
       const size = g.questSizes[g.questIdx];
       phase = `<h2>Misión ${g.questIdx + 1} · equipo de ${size}</h2>
-        <div class="who">${isLeader ? `<b>Sos el líder.</b> Elegí ${size} caballeros para la misión.` : `<b>${nameOf(g.leader)}</b> está eligiendo el equipo…`}</div>`;
+        <div class="who">${isLeader ? `<b>Sos el líder.</b> Tocá ${size} caballeros para la misión.` : `<b>${nameOf(g.leader)}</b> está eligiendo el equipo…`}</div>`;
       if (isLeader) {
         listMode = 'team';
         setFab(`<button class="btn" id="propose" ${selected.size !== size ? 'disabled' : ''}>Proponer equipo (${selected.size}/${size})</button>`);
@@ -505,8 +540,8 @@ function renderGame() {
       break;
     }
     case 'vote': {
-      phase = `<h2>Votación</h2><div class="who"><b>${nameOf(g.leader)}</b> propone: <b>${list(g.team)}</b></div>
-        <div class="small muted it" style="margin-top:4px">Votaron ${g.votedIds.length} de ${g.order.length}${g.rejections === 4 ? ' · <span style="color:var(--red)">¡si se rechaza, gana el mal!</span>' : ''}</div>`;
+      phase = `<h2>Votación</h2><div class="who"><b>${nameOf(g.leader)}</b> propone a <b>${list(g.team)}</b></div>
+        <div class="small muted it">Votaron ${g.votedIds.length} de ${g.order.length}${g.rejections === 4 ? ' · <span style="color:var(--red)">¡si se rechaza, gana el mal!</span>' : ''}</div>`;
       setFab(g.myVote === null
         ? `<div class="choice"><button data-vote="1">${ART.seal(true)}Aprobar</button><button data-vote="0">${ART.seal(false)}Rechazar</button></div>`
         : `<div class="wait">Sellaste tu voto: <b>${g.myVote ? 'Aprobar' : 'Rechazar'}</b>. Esperando al resto…</div>`);
@@ -515,17 +550,17 @@ function renderGame() {
     case 'quest': {
       const inTeam = g.team.includes(S.meId);
       phase = `<h2>Misión ${g.questIdx + 1} en marcha</h2><div class="who">Partieron <b>${list(g.team)}</b></div>
-        <div class="small muted it" style="margin-top:4px">Cartas jugadas: ${g.playedIds.length} de ${g.team.length}</div>`;
+        <div class="small muted it">Cartas jugadas: ${g.playedIds.length} de ${g.team.length}</div>`;
       if (inTeam && !g.myCardPlayed) {
         const good = g.me.team === 'good';
-        setFab(`<div class="wait small" style="margin-bottom:10px">Elegí tu carta en secreto${good ? ' (los leales sólo pueden jugar Éxito)' : ''}</div>
-          <div class="choice cards"><button data-card="1"><span class="qcard">${ART.questCard(true)}</span></button><button data-card="0" ${good ? 'disabled' : ''}><span class="qcard">${ART.questCard(false)}</span></button></div>`);
-      } else if (inTeam) setFab(`<div class="wait">Tu carta está boca abajo. Esperando al resto del equipo…</div>`);
+        setFab(`<div class="choice cards"><button data-card="1"><span class="qcard">${ART.questCard(true)}</span></button><button data-card="0" ${good ? 'disabled' : ''}><span class="qcard">${ART.questCard(false)}</span></button></div>
+          <div class="wait small">Elegí en secreto${good ? ' · los leales sólo juegan Éxito' : ''}</div>`);
+      } else if (inTeam) setFab(`<div class="wait">Tu carta está boca abajo. Esperando al resto…</div>`);
       break;
     }
     case 'assassin': {
       const amAssassin = g.me?.role === 'assassin';
-      phase = `<h2>¡El bien ganó tres misiones!</h2><div class="who"><b>${nameOf(g.assassin)}</b> es el Asesino. Los malvados pueden deliberar en voz alta: ¿quién es Merlín?</div>`;
+      phase = `<h2>¡El bien ganó tres misiones!</h2><div class="who"><b>${nameOf(g.assassin)}</b> es el Asesino. Los malvados deliberan en voz alta: ¿quién es Merlín?</div>`;
       if (amAssassin) {
         listMode = 'assassin';
         setFab(`<button class="btn" id="kill" style="background:linear-gradient(180deg,#e04a3a,#7a1410);color:#fff;text-shadow:none" ${selected.size !== 1 ? 'disabled' : ''}>${selected.size ? 'Asesinar a ' + nameOf([...selected][0]) : 'Elegí a tu víctima'}</button>`);
@@ -534,8 +569,8 @@ function renderGame() {
     }
     case 'end': {
       const isHost = S.hostId === S.meId;
-      phase = `<div class="center"><div class="deco" style="font-size:30px;color:${g.winner === 'good' ? 'var(--blue)' : 'var(--red)'}">${g.winner === 'good' ? 'Gana el Bien' : 'Gana el Mal'}</div>
-        <div class="it">${esc(g.winReason)}</div>${g.assassinTarget ? `<div class="small muted it">El Asesino señaló a ${nameOf(g.assassinTarget)}</div>` : ''}</div>`;
+      phase = `<div class="center"><div class="deco" style="font-size:26px;color:${g.winner === 'good' ? 'var(--blue)' : 'var(--red)'}">${g.winner === 'good' ? 'Gana el Bien' : 'Gana el Mal'}</div>
+        <div class="it">${esc(g.winReason)}${g.assassinTarget ? ` · el Asesino señaló a ${nameOf(g.assassinTarget)}` : ''}</div></div>`;
       setFab(isHost ? `<button class="btn" id="again">Volver a la sala</button>` : `<div class="wait">Esperando al anfitrión…</div>`);
       break;
     }
@@ -544,10 +579,9 @@ function renderGame() {
   const rows = g.order.map((id) => {
     const p = byId[id] || { id, name: '¿?' };
     let tags = '';
-    if (id === g.leader && !['end', 'assassin'].includes(g.phase)) tags += `<span class="tag gold">${ART.icon.crown} líder</span>`;
-    if (g.team.includes(id) && (g.phase === 'vote' || g.phase === 'quest')) tags += `<span class="tag">${ART.icon.sword}</span>`;
-    if (g.phase === 'vote' && g.votedIds.includes(id)) tags += '<span class="tag">votó</span>';
-    if (g.phase === 'quest' && g.playedIds.includes(id)) tags += '<span class="tag">jugó</span>';
+    if (id === g.leader && !['end', 'assassin'].includes(g.phase)) tags += `<span class="ic" title="Líder">${ART.icon.crown}</span>`;
+    if (g.team.includes(id) && (g.phase === 'vote' || g.phase === 'quest')) tags += `<span class="ic" title="En el equipo">${ART.icon.sword}</span>`;
+    if ((g.phase === 'vote' && g.votedIds.includes(id)) || (g.phase === 'quest' && g.playedIds.includes(id))) tags += `<span class="ic" title="Listo">${ICON_CHECK}</span>`;
     if (g.phase === 'end') tags += `<span class="tag ${EVIL.includes(g.roles[id]) ? 'evil' : 'good'}">${ROLE_NAMES[g.roles[id]]}</span>`;
     let cls = '';
     const known = g.me?.night?.ids || [];
@@ -557,23 +591,17 @@ function renderGame() {
     return playerRow(p, tags, cls);
   }).join('');
 
-  const lv = g.lastVote;
-  const lastVoteHtml = lv ? `<details class="scroll"><summary>Última votación: ${lv.approved ? 'aprobada' : 'rechazada'}</summary>
-      <div class="small muted it" style="margin-top:8px">Equipo de ${nameOf(lv.leader)}: ${list(lv.team)}</div>
-      <div class="vote-grid">${g.order.map((id) => `<span>${nameOf(id)}</span><span class="tag ${lv.votes[id] ? 'good' : 'evil'}">${lv.votes[id] ? 'Aprueba' : 'Rechaza'}</span>`).join('')}</div></details>` : '';
-
+  const myCard = g.me && g.phase !== 'end' ? `<button class="tb card-btn" id="peek" title="Tu personaje">${ART.card('back')}<span>Mi carta</span></button>` : '';
   $app.innerHTML = `
-    <div class="topbar"><span class="deco">Avalon</span><span class="night-muted small">Sala ${S.code}</span></div>
-    ${boardHtml(g)}
-    <div class="scroll phase">${phase}</div>
-    <div class="scroll"><ul class="players">${rows}</ul></div>
-    ${g.me && g.phase !== 'end' ? `<div class="scroll peek" id="peek"><span class="thumb">${ART.card('back')}</span>
-      <span><span class="cz" style="font-weight:800">Tu personaje</span><br><span class="small muted it">Tocá para verlo en secreto</span></span></div>` : ''}
-    ${lastVoteHtml}
-    <details class="scroll"><summary>Personajes en juego</summary><div class="small" style="margin-top:8px">${Object.entries(g.rolesInPlay).map(([r, c]) => `${ROLE_NAMES[r]}${c > 1 ? ' ×' + c : ''}`).join(' · ')}</div></details>`;
+    ${topbar(`${myCard}<button class="tb" id="log" title="Registro">${ICON_LOG}</button>`)}
+    <div class="game-grid">
+      <div class="g-left">${boardHtml(g)}<div class="scroll phase">${phase}</div></div>
+      <div class="scroll g-right"><ul class="players grid ${g.phase === 'end' ? 'end' : ''}">${rows}</ul></div>
+    </div>`;
 
   const peek = document.getElementById('peek');
-  if (peek) peek.onclick = () => queueOverlay((el, close) => roleOverlay(el, close, false));
+  if (peek) peek.onclick = () => { SFX.click(); queueOverlay((el, close) => roleOverlay(el, close, false)); };
+  document.getElementById('log').onclick = showLog;
   document.querySelectorAll('.players li.clickable').forEach((li) => (li.onclick = () => {
     const id = li.dataset.id;
     if (listMode === 'assassin') selected = new Set(selected.has(id) ? [] : [id]);
