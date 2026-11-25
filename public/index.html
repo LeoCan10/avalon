@@ -3,409 +3,260 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#14110f" />
+<meta name="theme-color" content="#110d0c" />
 <title>Avalon</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 18L2 7l5 4 5-7 5 7 5-4-1 11z' fill='%23e7c36a'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #14110f; --panel: #1f1a16; --panel2: #2a231d; --line: #3a3029;
-    --text: #efe6d8; --muted: #a8998a; --gold: #d9a441;
-    --good: #4f8fd6; --good-bg: #16273a; --evil: #d0453f; --evil-bg: #3a1716;
+    --night: #110d0c; --night2: #1c1512;
+    --parch: #efe0bd; --parch2: #e0c995; --parch-edge: #b8955a;
+    --ink: #2e1f12; --ink-soft: #6b5238;
+    --gold: #e7c36a; --gold-d: #9c7330; --gold-dd: #6b4a1d;
+    --blue: #2c64a8; --blue-d: #16345e; --red: #a3201b; --red-d: #4f0e0b;
+    --text-night: #ecdcb8;
+    --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.4 Inter, system-ui, sans-serif; }
-  body { min-height: 100dvh; }
-  .wrap { max-width: 520px; margin: 0 auto; padding: 16px 16px 120px; }
-  h1, h2, h3, .serif { font-family: Cinzel, Georgia, serif; letter-spacing: .03em; }
-  h1 { font-size: 40px; text-align: center; margin: 32px 0 4px; color: var(--gold); }
-  h2 { font-size: 20px; margin: 20px 0 10px; }
-  .sub { text-align: center; color: var(--muted); margin-bottom: 28px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 12px 0; }
-  input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font-size: 17px; }
-  input:focus { outline: 2px solid var(--gold); border-color: transparent; }
-  button { font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 14px 16px; cursor: pointer; color: var(--text); background: var(--panel2); border: 1px solid var(--line); }
-  button:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-gold { background: var(--gold); color: #1a1208; border-color: var(--gold); }
-  .btn-good { background: var(--good); border-color: var(--good); }
-  .btn-evil { background: var(--evil); border-color: var(--evil); }
-  .full { width: 100%; }
-  .row { display: flex; gap: 10px; }
-  .row > * { flex: 1; }
-  .stack > * + * { margin-top: 10px; }
-  .muted { color: var(--muted); }
-  .small { font-size: 13px; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100dvh; color: var(--text-night);
+    font: 18px/1.4 'IM Fell English', Georgia, serif;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% -10%, #3a2b45 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 110%, #2b1a10 0%, transparent 70%),
+      var(--night);
+    background-attachment: fixed;
+  }
+  body::before { content: ''; position: fixed; inset: 0; background: var(--noise); opacity: .35; pointer-events: none; z-index: 0; }
+  .wrap { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 16px 16px 240px; }
+  h1, h2, h3, .cz { font-family: Cinzel, Georgia, serif; letter-spacing: .04em; }
+  .deco { font-family: 'Cinzel Decorative', Cinzel, serif; }
+  h2 { font-size: 19px; margin: 0 0 6px; }
+  em, .it { font-style: italic; }
+  .muted { color: var(--ink-soft); }
+  .night-muted { color: #a8977a; }
+  .small { font-size: 15px; }
   .center { text-align: center; }
-  .code { font-family: Cinzel, serif; font-size: 44px; letter-spacing: .25em; text-align: center; color: var(--gold); }
+
+  /* ---- Pergamino ---- */
+  .scroll {
+    position: relative; color: var(--ink); margin: 14px 0; padding: 18px 18px;
+    background: radial-gradient(ellipse at 50% 40%, var(--parch) 0%, #e8d6ab 55%, var(--parch2) 85%, #c9a868 100%);
+    border-radius: 4px; border: 1px solid var(--parch-edge);
+    box-shadow: inset 0 0 28px #8a6a3a77, inset 0 0 4px #6b4a1d, 0 10px 24px #000b;
+  }
+  .scroll::before { content: ''; position: absolute; inset: 0; background: var(--noise); mix-blend-mode: multiply; opacity: .5; border-radius: inherit; pointer-events: none; }
+  .scroll > * { position: relative; }
+  .rule { display: flex; align-items: center; gap: 8px; color: var(--gold-d); margin: 10px 0; }
+  .rule::before, .rule::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-d), transparent); }
+  .rule i { width: 7px; height: 7px; background: var(--gold-d); transform: rotate(45deg); display: block; }
+
+  /* ---- Botones ---- */
+  button { font: inherit; cursor: pointer; border: 0; color: inherit; background: none; }
+  .btn {
+    display: block; width: 100%; padding: 15px 16px; border-radius: 6px;
+    font-family: Cinzel, serif; font-weight: 800; font-size: 16px; letter-spacing: .08em; text-transform: uppercase;
+    color: #2a1a0a; background: linear-gradient(180deg, #f4d98e 0%, var(--gold) 45%, #b8862b 100%);
+    border: 1px solid var(--gold-dd); box-shadow: inset 0 1px 0 #fff6, inset 0 -2px 0 #0003, 0 4px 12px #0008;
+    text-shadow: 0 1px 0 #fff5; transition: transform .1s, filter .2s;
+  }
+  .btn:active { transform: translateY(2px); }
+  .btn:disabled { filter: grayscale(.8) brightness(.6); cursor: not-allowed; }
+  .btn.dark { color: var(--text-night); background: linear-gradient(180deg, #4a372a, #2b1f17); border-color: #6b4a1d; text-shadow: none; box-shadow: inset 0 1px 0 #ffffff1a, 0 4px 12px #0008; }
+  .btn.small { padding: 8px 12px; font-size: 12px; width: auto; display: inline-block; }
+  input {
+    width: 100%; padding: 14px; border-radius: 4px; font: 20px 'IM Fell English', serif; color: var(--ink);
+    background: #fbf3df; border: 1px solid var(--parch-edge); box-shadow: inset 0 2px 6px #8a6a3a44;
+  }
+  input::placeholder { color: #a08866; font-style: italic; }
+  input:focus { outline: 2px solid var(--gold-d); }
+  label.lbl { font-family: Cinzel, serif; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); display: block; margin-bottom: 6px; }
+
+  /* ---- Portada ---- */
+  .hero { text-align: center; margin: 4px -16px 0; }
+  .castle { width: 100%; height: 170px; display: block; }
+  .title { font-family: 'Cinzel Decorative', serif; font-weight: 900; font-size: 52px; margin: -14px 0 0; color: #f0cf7a;
+    text-shadow: 0 1px 0 #fff3c9, 0 3px 0 #6b4a1d, 0 6px 10px #000c, 0 0 28px #e7c36a66; animation: rise .9s ease-out both; }
+  .tagline { font-style: italic; color: #c9b48a; margin: 2px 0 6px; animation: rise .9s .15s ease-out both; }
+  .or { text-align: center; font-style: italic; color: #a8977a; margin: 14px 0; }
+
+  /* ---- Sala ---- */
+  .code { font-family: 'Cinzel Decorative', serif; font-weight: 900; font-size: 46px; letter-spacing: .22em; text-align: center; color: var(--red); text-shadow: 0 1px 0 #fff8; margin: 2px 0 8px; padding-left: .22em; }
   .players { list-style: none; padding: 0; margin: 0; }
-  .players li { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 10px; border: 1px solid transparent; }
-  .players li + li { margin-top: 4px; }
-  .players li.sel { border-color: var(--gold); background: #2d2415; }
-  .players li.clickable { cursor: pointer; background: var(--panel2); }
-  .players .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #5c8a4d; flex: none; }
-  .dot.off { background: #555; }
-  .tag { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
-  .tag.gold { color: var(--gold); border-color: #6b5326; }
-  .tag.good { color: #9cc4f0; border-color: #2f5179; background: var(--good-bg); }
-  .tag.evil { color: #f09a96; border-color: #7a2c29; background: var(--evil-bg); }
-  .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
-  .toggle + .toggle { border-top: 1px solid var(--line); }
-  .switch { position: relative; width: 48px; height: 28px; flex: none; }
+  .players li { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 4px; border: 1px solid transparent; transition: background .2s, border-color .2s, transform .15s; }
+  .players li + li { border-top: 1px dashed #b8955a66; }
+  .players li.clickable { cursor: pointer; }
+  .players li.clickable:active { transform: scale(.98); }
+  .players li.sel { background: #e7c36a55; border-color: var(--gold-d); border-style: solid; }
+  .players .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 19px; }
+  .shield { width: 26px; height: 32px; flex: none; filter: drop-shadow(0 1px 1px #0006); }
+  .ico { width: 18px; height: 18px; vertical-align: -3px; }
+  .tag { font-family: Cinzel, serif; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; white-space: nowrap; display: inline-flex; gap: 4px; align-items: center; border: 1px solid #9c733088; color: var(--ink-soft); background: #fff4; }
+  .tag.gold { color: #6b4a1d; border-color: var(--gold-d); background: #e7c36a66; }
+  .tag.good { color: #fff; background: var(--blue); border-color: var(--blue-d); }
+  .tag.evil { color: #fff; background: var(--red); border-color: var(--red-d); }
+  .kick { color: var(--red); font-size: 18px; padding: 2px 8px; }
+
+  .toggle { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .toggle + .toggle { border-top: 1px dashed #b8955a66; }
+  .toggle .mini { width: 38px; flex: none; }
+  .toggle .mini svg { width: 38px; height: auto; display: block; border-radius: 3px; box-shadow: 0 2px 4px #0006; }
+  .toggle .txt { flex: 1; }
+  .switch { position: relative; width: 50px; height: 28px; flex: none; }
   .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .switch span { position: absolute; inset: 0; background: #3a332c; border-radius: 99px; transition: .2s; }
-  .switch span::after { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: #ddd; border-radius: 50%; transition: .2s; }
-  .switch input:checked + span { background: var(--gold); }
-  .switch input:checked + span::after { transform: translateX(20px); }
+  .switch span { position: absolute; inset: 0; background: #b8a07a; border-radius: 99px; transition: .25s; box-shadow: inset 0 2px 4px #0004; }
+  .switch span::after { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; border-radius: 50%; transition: .25s; background: radial-gradient(circle at 35% 30%, #fff, #d9c7a0); box-shadow: 0 1px 3px #0006; }
+  .switch input:checked + span { background: var(--gold-d); }
+  .switch input:checked + span::after { transform: translateX(22px); background: radial-gradient(circle at 35% 30%, #fff3c4, var(--gold)); }
+
+  /* ---- Tablero ---- */
+  .topbar { display: flex; justify-content: space-between; align-items: baseline; }
+  .topbar .deco { color: var(--gold); font-size: 22px; }
   .quests { display: flex; justify-content: space-between; gap: 6px; }
-  .quest { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: Cinzel, serif; font-size: 20px; position: relative; max-width: 64px; }
-  .quest.cur { border-color: var(--gold); box-shadow: 0 0 0 3px #d9a44133; }
-  .quest.ok { background: var(--good); border-color: var(--good); }
-  .quest.ko { background: var(--evil); border-color: var(--evil); }
-  .quest small { font-family: Inter; font-size: 9px; position: absolute; bottom: 6px; color: var(--muted); }
-  .quest.ok small, .quest.ko small { color: #fff; }
-  .rej { display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 12px; }
-  .rej i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--line); display: block; }
-  .rej i.on { background: var(--evil); border-color: var(--evil); }
-  .role-card { text-align: center; padding: 22px 16px; border-radius: 14px; cursor: pointer; user-select: none; }
-  .role-card.good { background: var(--good-bg); border: 1px solid #2f5179; }
-  .role-card.evil { background: var(--evil-bg); border: 1px solid #7a2c29; }
-  .role-card.hidden { background: var(--panel); border: 1px dashed var(--line); }
-  .role-name { font-family: Cinzel, serif; font-size: 26px; font-weight: 800; }
-  .fab { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 30%); }
+  .quest { flex: 1; max-width: 62px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; position: relative;
+    font-family: Cinzel, serif; font-weight: 800; font-size: 22px; color: var(--ink);
+    background: radial-gradient(circle at 40% 35%, #fbf1d6, #dcc390); border: 2px solid var(--gold-d); box-shadow: inset 0 0 0 3px #fff6, inset 0 0 0 4px var(--gold-d), 0 2px 4px #0005; }
+  .quest .need { position: absolute; bottom: -7px; white-space: nowrap; letter-spacing: .02em; font-size: 8px; background: var(--red); color: #fff; padding: 1px 5px; border-radius: 6px; font-family: Cinzel; }
+  .quest.cur { animation: pulse 2s infinite; }
+  .quest.ok, .quest.ko { border: 0; box-shadow: 0 3px 6px #0007; animation: stamp .6s cubic-bezier(.2,1.6,.4,1) both; }
+  .quest.ok { background: radial-gradient(circle at 35% 30%, #5b9be0, var(--blue-d)); }
+  .quest.ko { background: radial-gradient(circle at 35% 30%, #e04a3a, var(--red-d)); }
+  .quest svg { width: 70%; height: 70%; }
+  .rej { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 14px; font-family: Cinzel; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+  .rej i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--gold-d); display: block; background: #fff5; }
+  .rej i.on { background: radial-gradient(circle at 35% 30%, #e04a3a, var(--red-d)); border-color: var(--red-d); }
+  .rej i.danger { animation: pulse-red 1.2s infinite; }
+
+  .phase h2 { font-size: 21px; }
+  .phase .who { font-size: 19px; }
+  .phase b { font-weight: normal; font-family: Cinzel, serif; font-weight: 800; }
+
+  .peek { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+  .peek .thumb { width: 54px; flex: none; transition: transform .3s; }
+  .peek:hover .thumb { transform: rotate(-4deg) scale(1.04); }
+  .peek .thumb svg { width: 100%; display: block; filter: drop-shadow(0 4px 6px #0008); }
+
+  details > summary { cursor: pointer; font-family: Cinzel, serif; font-size: 14px; letter-spacing: .05em; color: var(--ink-soft); list-style: none; }
+  details > summary::before { content: '❧ '; color: var(--gold-d); }
+  .vote-grid { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 16px; margin-top: 10px; align-items: center; }
+
+  /* ---- Barra inferior ---- */
+  .fab { position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; padding: 26px 16px calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, #110d0cee 35%); }
   .fab .inner { max-width: 520px; margin: 0 auto; }
-  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--evil); color: #fff; padding: 10px 16px; border-radius: 10px; z-index: 10; max-width: 90vw; box-shadow: 0 6px 20px #0008; }
-  .banner { text-align: center; padding: 14px; border-radius: 12px; font-weight: 600; }
-  .banner.good { background: var(--good-bg); color: #b8d6f5; }
-  .banner.evil { background: var(--evil-bg); color: #f5bab7; }
-  .vote-grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14px; }
-  .big-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .big-choice button { padding: 28px 10px; font-size: 18px; font-family: Cinzel, serif; }
-  a { color: var(--gold); }
-  details summary { cursor: pointer; color: var(--muted); }
+  .fab .wait { text-align: center; font-style: italic; color: #c9b48a; }
+  .choice { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .choice button { display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: Cinzel; font-weight: 800; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-night); transition: transform .15s; }
+  .choice button:active { transform: scale(.94); }
+  .choice button:disabled { opacity: .3; filter: grayscale(1); }
+  .choice .seal-svg { width: 78px; height: 78px; filter: drop-shadow(0 4px 6px #000a); }
+  .choice .qcard { width: 92px; filter: drop-shadow(0 6px 10px #000a); }
+  .choice .qcard svg { width: 100%; display: block; }
+  .choice.cards button:not(:disabled):hover .qcard { transform: translateY(-6px); }
+  .choice .qcard { transition: transform .2s; }
+
+  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 50; max-width: 90vw; padding: 10px 18px;
+    background: var(--parch); color: var(--red); border: 1px solid var(--red); border-radius: 4px; font-size: 17px; box-shadow: 0 8px 20px #000b; animation: drop .3s ease-out; }
+
+  /* ---- Superposiciones ---- */
+  .overlay { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); overflow-y: auto;
+    background: radial-gradient(ellipse at 50% 40%, #241a2af0, #070505fa 70%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(4px); animation: fade .35s ease-out; }
+  .overlay.out { animation: fade-out .3s ease-in forwards; }
+  .overlay .ov-title { font-family: 'Cinzel Decorative', serif; font-weight: 900; font-size: 30px; color: var(--gold); text-align: center; text-shadow: 0 2px 0 #000, 0 0 20px #e7c36a55; margin: 0 0 6px; animation: rise .6s ease-out both; }
+  .overlay .ov-sub { font-style: italic; text-align: center; color: #d9c8a4; max-width: 340px; animation: rise .6s .1s ease-out both; }
+  .overlay .tap { margin-top: 18px; font-family: Cinzel; font-size: 12px; letter-spacing: .15em; text-transform: uppercase; color: #a8977a; animation: blink 2s infinite; }
+  .overlay .btn { max-width: 320px; margin-top: 18px; }
+  .particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+  .particles span { position: absolute; bottom: -10px; border-radius: 50%; animation: float linear infinite; }
+
+  /* Carta que se da vuelta */
+  .flip { width: min(64vw, 250px); aspect-ratio: 200/280; perspective: 1200px; cursor: pointer; margin: 18px 0 8px; animation: rise .7s ease-out both; }
+  .flip .inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.3,1.4,.5,1); }
+  .flip.open .inner { transform: rotateY(180deg); }
+  .flip .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; filter: drop-shadow(0 14px 24px #000c); }
+  .flip .face.front { transform: rotateY(180deg); }
+  .flip .face svg { width: 100%; height: 100%; display: block; }
+  .flip:not(.open) .face.back { animation: bob 3s ease-in-out infinite; }
+  .role-info { text-align: center; max-width: 360px; opacity: 0; transform: translateY(10px); transition: .5s .5s; }
+  .flip.open + .role-info { opacity: 1; transform: none; }
+  .role-info .side { font-family: Cinzel; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; }
+  .role-info .quote { font-style: italic; font-size: 20px; color: #f1e3c0; margin: 6px 0 10px; }
+  .role-info .night { margin-top: 12px; padding: 12px; border-radius: 6px; background: #00000055; border: 1px solid #ffffff22; }
+  .role-info .night .names { font-family: Cinzel; font-weight: 800; font-size: 19px; margin-top: 4px; }
+
+  /* Temas por personaje (sólo dentro de la pantalla secreta) */
+  .overlay.role-merlin   { background: radial-gradient(ellipse at 50% 35%, #2f3590ee, #05061aF8 70%); }
+  .overlay.role-percival { background: radial-gradient(ellipse at 50% 35%, #2a5c99ee, #050d1af8 70%); }
+  .overlay.role-servant  { background: radial-gradient(ellipse at 50% 35%, #6b5420ee, #0d0a04f8 70%); }
+  .overlay.role-assassin { background: radial-gradient(ellipse at 50% 35%, #7a1414ee, #0a0101f8 70%); }
+  .overlay.role-morgana  { background: radial-gradient(ellipse at 50% 35%, #5a1f80ee, #0b0312f8 70%); }
+  .overlay.role-mordred  { background: radial-gradient(ellipse at 50% 35%, #4a0808ee, #000000f8 70%); }
+  .overlay.role-oberon   { background: radial-gradient(ellipse at 50% 35%, #1d4a40ee, #010605f8 70%); }
+  .overlay.role-minion   { background: radial-gradient(ellipse at 50% 35%, #6b2a10ee, #0a0301f8 70%); }
+  .overlay[class*="role-"] .ov-title { transition: color .5s; }
+  .side.good { color: #a9cbff; } .side.evil { color: #ff9a8a; }
+
+  /* Revelación de misión / votos */
+  .reveal-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0 6px; max-width: 420px; }
+  .mini-flip { width: 70px; aspect-ratio: 200/280; perspective: 800px; }
+  .mini-flip .inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.3,1.4,.5,1); }
+  .mini-flip.open .inner { transform: rotateY(180deg); }
+  .mini-flip .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; filter: drop-shadow(0 6px 10px #000b); }
+  .mini-flip .face.front { transform: rotateY(180deg); }
+  .mini-flip svg { width: 100%; height: 100%; display: block; }
+  .verdict { font-family: 'Cinzel Decorative', serif; font-weight: 900; font-size: 40px; letter-spacing: .06em; margin-top: 14px; opacity: 0; }
+  .verdict.show { animation: stamp .7s cubic-bezier(.2,1.6,.4,1) forwards; }
+  .verdict.good { color: #8ec0ff; text-shadow: 0 0 24px #2c64a8; }
+  .verdict.evil { color: #ff6a5a; text-shadow: 0 0 24px #a3201b; }
+  .vote-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 12px 10px; width: 100%; max-width: 420px; margin-top: 18px; }
+  .vote-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 15px; color: #ecdcb8; text-align: center; }
+  .vote-item .seal-wrap { width: 54px; height: 54px; position: relative; }
+  .vote-item .seal-wrap > * { position: absolute; inset: 0; }
+  .vote-item .seal-svg { width: 54px; height: 54px; opacity: 0; transform: scale(2.4) rotate(-20deg); }
+  .vote-item.show .seal-svg { animation: seal-in .45s cubic-bezier(.2,1.5,.4,1) forwards; }
+  .vote-item .blank { border-radius: 50%; border: 2px dashed #ffffff33; }
+  .vote-item .vn { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vote-item.leader .vn::before { content: '♛ '; color: var(--gold); }
+  .team-line { color: #d9c8a4; font-style: italic; text-align: center; margin-top: 4px; }
+  .end-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 12px; width: 100%; max-width: 440px; margin-top: 18px; }
+  .end-grid .pc { text-align: center; font-size: 14px; color: #ecdcb8; opacity: 0; animation: rise .5s ease-out forwards; }
+  .end-grid .pc svg { width: 100%; display: block; filter: drop-shadow(0 4px 8px #000a); }
+  .end-grid .pc.target svg { outline: 3px solid #ff5a4a; outline-offset: 2px; border-radius: 10px; }
+  .end-grid .pc .pn { margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* SVG animaciones */
+  .tw { animation: twinkle 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .flicker { animation: flicker 1.8s infinite; }
+  .flag { animation: wave 2.4s ease-in-out infinite; transform-origin: 200px 34px; }
+  .eye { animation: eye 4s infinite; transform-box: fill-box; transform-origin: center; }
+  .mist { animation: drift 6s ease-in-out infinite alternate; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes fade-out { to { opacity: 0; } }
+  @keyframes drop { from { opacity: 0; transform: translate(-50%, -12px); } }
+  @keyframes pulse { 0%,100% { box-shadow: inset 0 0 0 3px #fff6, inset 0 0 0 4px var(--gold-d), 0 0 0 0 #e7c36aaa; } 50% { box-shadow: inset 0 0 0 3px #fff6, inset 0 0 0 4px var(--gold-d), 0 0 0 8px #e7c36a00; } }
+  @keyframes pulse-red { 0%,100% { box-shadow: 0 0 0 0 #e04a3aaa; } 50% { box-shadow: 0 0 0 6px #e04a3a00; } }
+  @keyframes stamp { 0% { opacity: 0; transform: scale(2.2) rotate(-12deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+  @keyframes seal-in { 0% { opacity: 0; transform: scale(2.4) rotate(-20deg); } 100% { opacity: 1; transform: scale(1) rotate(-6deg); } }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+  @keyframes blink { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+  @keyframes float { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate(var(--dx, 20px), -110vh) scale(.4); opacity: 0; } }
+  @keyframes twinkle { 0%,100% { opacity: .35; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.15); } }
+  @keyframes flicker { 0%,100% { opacity: 1; } 40% { opacity: .7; } 60% { opacity: .9; } 80% { opacity: .6; } }
+  @keyframes wave { 0%,100% { transform: skewY(0); } 50% { transform: skewY(-8deg) scaleX(.9); } }
+  @keyframes eye { 0%,44%,52%,100% { transform: scaleY(1); } 48% { transform: scaleY(.1); } }
+  @keyframes drift { from { transform: translateX(-8px); } to { transform: translateX(8px); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; transition-duration: .01s !important; } }
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <div id="fab"></div>
-<script>
-const $app = document.getElementById('app');
-const $fab = document.getElementById('fab');
-
-const ROLE_INFO = {
-  merlin: 'Conocés a los malvados (menos a Mordred). Guiá a los leales sin que el Asesino te descubra.',
-  percival: 'Sabés quién es Merlín… pero Morgana puede hacerse pasar por él.',
-  servant: 'No sabés nada. Descubrí a los traidores con la conversación y los votos.',
-  assassin: 'Si el bien gana 3 misiones, tenés una última chance: adivinar quién es Merlín.',
-  morgana: 'Te hacés pasar por Merlín ante Percival.',
-  mordred: 'Merlín no sabe que sos malvado.',
-  oberon: 'Sos malvado, pero no conocés a tus compañeros y ellos no te conocen.',
-  minion: 'Conocés a tus compañeros malvados. Saboteá las misiones sin que te descubran.',
-};
-const ROLE_NAMES = { merlin: 'Merlín', percival: 'Percival', servant: 'Leal servidor', assassin: 'Asesino', morgana: 'Morgana', mordred: 'Mordred', oberon: 'Oberón', minion: 'Esbirro' };
-const EVIL_COUNT = { 5: 2, 6: 2, 7: 3, 8: 3, 9: 3, 10: 4 };
-
-let S = null;               // estado de la sala
-let selected = new Set();   // selección local (equipo / objetivo)
-let roleShown = false;
-let lastPhaseKey = '';
-
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-  del(k) { try { localStorage.removeItem(k); } catch {} },
-};
-
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const nameOf = (id) => esc(S.players.find((p) => p.id === id)?.name ?? '¿?');
-
-function toast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
-
-// ---- Comunicación con el servidor (acciones por POST + consulta periódica) ----
-const POLL_MS = 1500;
-let busy = false;
-
-function applyState(s) {
-  if (S && s.ver < S.ver) return; // respuesta vieja que llegó tarde
-  const key = s.game ? s.game.phase + s.game.questIdx + s.game.leader + s.game.rejections : 'lobby';
-  if (key !== lastPhaseKey) { selected = new Set(); lastPhaseKey = key; }
-  if (!s.game) roleShown = false;
-  S = s; render();
-}
-
-function forgetRoom(msg) {
-  store.del('avalon.code'); store.del('avalon.token'); S = null;
-  history.replaceState(null, '', '/');
-  if (msg) toast(msg);
-  render();
-}
-
-const ARG = { setOptions: 'options', kick: 'target', vote: 'approve', questCard: 'success', propose: 'team', assassinate: 'target' };
-const socket = {
-  async emit(action, arg) {
-    if (busy) return;
-    busy = true;
-    const payload = ARG[action] ? { [ARG[action]]: arg } : { ...(arg || {}) };
-    try {
-      const r = await fetch('/api/room', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, code: S?.code ?? payload.code, token: store.get('avalon.token'), ...payload }),
-      });
-      const data = await r.json();
-      if (!r.ok) return toast(data.error || 'Error');
-      if (data.token) {
-        store.set('avalon.code', data.state.code); store.set('avalon.token', data.token);
-        history.replaceState(null, '', '?sala=' + data.state.code);
-      }
-      if (data.state) applyState(data.state);
-    } catch { toast('Sin conexión, probá de nuevo'); }
-    finally { busy = false; }
-  },
-};
-
-async function poll() {
-  const code = store.get('avalon.code'), token = store.get('avalon.token');
-  if (!code || !token || document.hidden) return;
-  try {
-    const r = await fetch(`/api/room?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}&ver=${S ? S.ver : ''}`);
-    const data = await r.json();
-    if (r.status === 410) return forgetRoom(S ? 'Te sacaron de la sala' : null);
-    if (!r.ok) { if (data.error === 'No existe esa sala') forgetRoom(S ? 'La sala expiró' : null); return; }
-    if (!data.same) applyState(data);
-  } catch {}
-}
-setInterval(poll, POLL_MS);
-document.addEventListener('visibilitychange', poll);
-poll();
-
-// ---- Render ----
-function render() {
-  $fab.innerHTML = '';
-  if (!S) return renderHome();
-  if (!S.game) return renderLobby();
-  renderGame();
-}
-
-function setFab(html) { $fab.innerHTML = `<div class="fab"><div class="inner">${html}</div></div>`; }
-
-function renderHome() {
-  const params = new URLSearchParams(location.search);
-  const code = (params.get('sala') || '').toUpperCase();
-  const name = store.get('avalon.name') || '';
-  $app.innerHTML = `
-    <h1>Avalon</h1>
-    <div class="sub">Lealtad y traición en la corte del Rey Arturo</div>
-    <div class="card stack">
-      <input id="name" placeholder="Tu nombre" maxlength="20" value="${esc(name)}" autocomplete="off" />
-    </div>
-    <div class="card stack">
-      <h2 style="margin-top:0">Unirse a una sala</h2>
-      <input id="code" placeholder="Código (ej: KQRT)" maxlength="4" value="${esc(code)}" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em" />
-      <button class="btn-gold full" id="join">Entrar</button>
-    </div>
-    <div class="center muted" style="margin:16px 0">o</div>
-    <button class="full" id="create">Crear sala nueva</button>
-    <details class="card" style="margin-top:28px"><summary>¿Cómo se juega?</summary>${rulesHtml()}</details>`;
-  const getName = () => { const n = document.getElementById('name').value.trim(); store.set('avalon.name', n); return n; };
-  document.getElementById('join').onclick = () => socket.emit('join', { name: getName(), code: document.getElementById('code').value });
-  document.getElementById('create').onclick = () => socket.emit('create', { name: getName() });
-}
-
-function rulesHtml() {
-  return `<div class="small stack" style="margin-top:10px">
-    <p>Los jugadores se dividen en <b style="color:#9cc4f0">leales a Arturo</b> y <b style="color:#f09a96">secuaces de Mordred</b>. Los malvados se conocen entre sí; los leales no saben nada (salvo Merlín).</p>
-    <p>Hay 5 misiones. En cada ronda el líder propone un equipo y todos votan. Si la mayoría aprueba, el equipo va a la misión; si no, el liderazgo pasa al siguiente. <b>5 rechazos seguidos = gana el mal.</b></p>
-    <p>En la misión, cada integrante juega en secreto Éxito o Fracaso. Los leales sólo pueden jugar Éxito. Con un Fracaso la misión falla (en la 4ª misión con 7+ jugadores hacen falta dos).</p>
-    <p>El primer bando en sumar 3 misiones gana… pero si gana el bien, el Asesino tiene una última chance: si adivina quién es Merlín, gana el mal.</p></div>`;
-}
-
-function playerRow(p, extra = '', cls = '') {
-  return `<li class="${cls}" data-id="${p.id}"><span class="name">${esc(p.name)}${p.id === S.meId ? ' <span class="muted">(vos)</span>' : ''}</span>${extra}</li>`;
-}
-
-function renderLobby() {
-  const isHost = S.hostId === S.meId;
-  const n = S.players.length;
-  const o = S.options;
-  const evilN = EVIL_COUNT[Math.min(Math.max(n, 5), 10)];
-  const link = location.origin + '/?sala=' + S.code;
-  const opt = (k, label, desc) => `
-    <label class="toggle"><div><div>${label}</div><div class="small muted">${desc}</div></div>
-    <span class="switch"><input type="checkbox" data-opt="${k}" ${o[k] ? 'checked' : ''} ${isHost ? '' : 'disabled'}><span></span></span></label>`;
-  $app.innerHTML = `
-    <div class="card center">
-      <div class="muted small">Código de la sala</div>
-      <div class="code">${S.code}</div>
-      <button id="share" class="full" style="margin-top:8px">Compartir link</button>
-    </div>
-    <h2>Jugadores <span class="muted">${n}/10</span></h2>
-    <div class="card"><ul class="players">${S.players.map((p) => playerRow(p,
-      (p.id === S.hostId ? '<span class="tag gold">anfitrión</span>' : '') +
-      (isHost && p.id !== S.meId ? `<button class="small" data-kick="${p.id}" style="padding:4px 10px">✕</button>` : ''))).join('')}</ul>
-      ${n < 5 ? `<div class="small muted center" style="margin-top:10px">Faltan ${5 - n} para poder empezar</div>` : ''}
-    </div>
-    <h2>Personajes</h2>
-    <div class="card">
-      <div class="small muted" style="margin-bottom:6px">Siempre: Merlín y Asesino. Con ${n >= 5 ? n : 5} jugadores: ${evilN} malvados.</div>
-      ${opt('percival', 'Percival', 'Ve a Merlín (y a Morgana si está)')}
-      ${opt('morgana', 'Morgana', 'Confunde a Percival')}
-      ${opt('mordred', 'Mordred', 'Invisible para Merlín')}
-      ${opt('oberon', 'Oberón', 'Malvado solitario')}
-      ${!isHost ? '<div class="small muted">Sólo el anfitrión cambia esto.</div>' : ''}
-    </div>
-    <details class="card"><summary>¿Cómo se juega?</summary>${rulesHtml()}</details>
-    <button id="leave" class="full" style="margin-top:8px">Salir de la sala</button>`;
-  if (isHost) setFab(`<button class="btn-gold full" id="start" ${n < 5 || n > 10 ? 'disabled' : ''}>Empezar partida</button>`);
-  else setFab(`<div class="center muted">Esperando que el anfitrión empiece…</div>`);
-
-  document.getElementById('share').onclick = async () => {
-    try { if (navigator.share) await navigator.share({ title: 'Avalon', text: `Sumate a Avalon, sala ${S.code}`, url: link }); else { await navigator.clipboard.writeText(link); toast('Link copiado'); } } catch {}
-  };
-  document.querySelectorAll('[data-opt]').forEach((el) => el.onchange = () => socket.emit('setOptions', { [el.dataset.opt]: el.checked }));
-  document.querySelectorAll('[data-kick]').forEach((el) => el.onclick = () => socket.emit('kick', el.dataset.kick));
-  document.getElementById('leave').onclick = async () => { await socket.emit('leave'); forgetRoom(); };
-  const st = document.getElementById('start'); if (st) st.onclick = () => socket.emit('start');
-}
-
-function boardHtml(g) {
-  const quests = g.questSizes.map((size, i) => {
-    const r = g.results[i];
-    const cls = r ? (r.success ? 'ok' : 'ko') : i === g.questIdx && g.phase !== 'end' && g.phase !== 'assassin' ? 'cur' : '';
-    return `<div class="quest ${cls}">${r ? (r.success ? '✓' : '✗') : size}${g.failsNeeded[i] > 1 ? '<small>2 ✗</small>' : ''}</div>`;
-  }).join('');
-  const rej = [0, 1, 2, 3, 4].map((i) => `<i class="${i < g.rejections ? 'on' : ''}"></i>`).join('');
-  return `<div class="card"><div class="quests">${quests}</div>
-    <div class="rej"><span class="small muted" style="margin-right:6px">Rechazos</span>${rej}</div></div>`;
-}
-
-function roleHtml(g) {
-  const me = g.me;
-  if (!me) return '';
-  if (!roleShown) return `<div class="role-card hidden" id="role"><div class="serif" style="font-size:18px">Tocá para ver tu personaje</div><div class="small muted">Que nadie mire tu pantalla</div></div>`;
-  const night = me.night ? `<div style="margin-top:12px"><div class="small muted">${esc(me.night.label)}:</div><div style="font-weight:600;margin-top:4px">${me.night.ids.length ? me.night.ids.map(nameOf).join(', ') : '—'}</div></div>` : '';
-  return `<div class="role-card ${me.team}" id="role">
-    <div class="small muted">${me.team === 'good' ? 'Leal a Arturo' : 'Secuaz de Mordred'}</div>
-    <div class="role-name">${esc(me.roleName)}</div>
-    <div class="small" style="margin-top:6px">${ROLE_INFO[me.role]}</div>${night}
-    <div class="small muted" style="margin-top:12px">Tocá para ocultar</div></div>`;
-}
-
-function renderGame() {
-  const g = S.game;
-  const isLeader = g.leader === S.meId;
-  const byId = Object.fromEntries(S.players.map((p) => [p.id, p]));
-  let phaseHtml = '';
-  let listMode = null; // 'team' | 'assassin'
-
-  const lastVoteHtml = () => {
-    const lv = g.lastVote;
-    if (!lv) return '';
-    return `<details class="card"><summary>Última votación: ${lv.approved ? 'aprobada' : 'rechazada'} (equipo de ${nameOf(lv.leader)})</summary>
-      <div class="small muted" style="margin:8px 0">Equipo: ${lv.team.map(nameOf).join(', ')}</div>
-      <div class="vote-grid">${g.order.map((id) => `<span>${nameOf(id)}</span><span class="tag ${lv.votes[id] ? 'good' : 'evil'}">${lv.votes[id] ? 'Aprueba' : 'Rechaza'}</span>`).join('')}</div></details>`;
-  };
-
-  const lastQuest = g.results[g.results.length - 1];
-  const lastQuestHtml = lastQuest && (g.phase === 'team' || g.phase === 'assassin') && g.lastVote?.quest === g.results.length - 1
-    ? `<div class="banner ${lastQuest.success ? 'good' : 'evil'}">Misión ${g.results.length}: ${lastQuest.success ? 'ÉXITO' : 'FRACASO'} · ${lastQuest.fails} carta${lastQuest.fails === 1 ? '' : 's'} de fracaso</div>` : '';
-
-  switch (g.phase) {
-    case 'team': {
-      const size = g.questSizes[g.questIdx];
-      phaseHtml = `<h2>Misión ${g.questIdx + 1} · equipo de ${size}</h2>
-        <div class="muted">${isLeader ? `Sos el líder. Elegí ${size} jugadores.` : `${nameOf(g.leader)} está armando el equipo.`}</div>`;
-      if (isLeader) {
-        listMode = 'team';
-        setFab(`<button class="btn-gold full" id="propose" ${selected.size !== size ? 'disabled' : ''}>Proponer equipo (${selected.size}/${size})</button>`);
-      }
-      break;
-    }
-    case 'vote': {
-      phaseHtml = `<h2>Votación</h2><div class="muted">${nameOf(g.leader)} propone: <b style="color:var(--text)">${g.team.map(nameOf).join(', ')}</b></div>
-        <div class="small muted" style="margin-top:6px">Votaron ${g.votedIds.length}/${g.order.length}${g.rejections === 4 ? ' · <b style="color:var(--evil)">¡Si se rechaza, gana el mal!</b>' : ''}</div>`;
-      if (g.myVote === null) setFab(`<div class="big-choice"><button class="btn-good" data-vote="1">Aprobar</button><button class="btn-evil" data-vote="0">Rechazar</button></div>`);
-      else setFab(`<div class="center muted">Votaste <b>${g.myVote ? 'Aprobar' : 'Rechazar'}</b>. Esperando al resto…</div>`);
-      break;
-    }
-    case 'quest': {
-      const inTeam = g.team.includes(S.meId);
-      phaseHtml = `<h2>Misión ${g.questIdx + 1} en curso</h2><div class="muted">Equipo: ${g.team.map(nameOf).join(', ')}</div>
-        <div class="small muted" style="margin-top:6px">Cartas jugadas ${g.playedIds.length}/${g.team.length}</div>`;
-      if (inTeam && !g.myCardPlayed) {
-        const good = g.me.team === 'good';
-        setFab(`<div class="small muted center" style="margin-bottom:8px">Elegí en secreto${good ? ' (los leales sólo pueden jugar Éxito)' : ''}</div>
-          <div class="big-choice"><button class="btn-good" data-card="1">Éxito</button><button class="btn-evil" data-card="0" ${good ? 'disabled' : ''}>Fracaso</button></div>`);
-      } else if (inTeam) setFab(`<div class="center muted">Carta jugada. Esperando al resto del equipo…</div>`);
-      break;
-    }
-    case 'assassin': {
-      const amAssassin = g.me?.role === 'assassin';
-      phaseHtml = `<h2>¡El bien ganó 3 misiones!</h2><div class="muted">${nameOf(g.assassin)} es el Asesino. Los malvados pueden debatir en voz alta; el Asesino elige quién cree que es Merlín.</div>`;
-      if (amAssassin) {
-        listMode = 'assassin';
-        setFab(`<button class="btn-evil full" id="kill" ${selected.size !== 1 ? 'disabled' : ''}>Asesinar${selected.size ? ' a ' + nameOf([...selected][0]) : ''}</button>`);
-      }
-      break;
-    }
-    case 'end': {
-      const isHost = S.hostId === S.meId;
-      phaseHtml = `<div class="banner ${g.winner}" style="font-size:20px;margin-top:12px"><div class="serif" style="font-size:26px">${g.winner === 'good' ? 'Gana el bien' : 'Gana el mal'}</div><div class="small">${esc(g.winReason)}</div></div>
-        ${g.assassinTarget ? `<div class="center muted small" style="margin-top:8px">El Asesino eligió a ${nameOf(g.assassinTarget)}</div>` : ''}`;
-      setFab(isHost ? `<button class="btn-gold full" id="again">Volver a la sala</button>` : `<div class="center muted">Esperando al anfitrión…</div>`);
-      break;
-    }
-  }
-
-  const rows = g.order.map((id) => {
-    const p = byId[id] || { id, name: '¿?', connected: false };
-    let tags = '';
-    if (id === g.leader && !['end', 'assassin'].includes(g.phase)) tags += '<span class="tag gold">👑 líder</span>';
-    if (g.team.includes(id) && (g.phase === 'vote' || g.phase === 'quest')) tags += '<span class="tag">⚔ equipo</span>';
-    if (g.phase === 'vote' && g.votedIds.includes(id)) tags += '<span class="tag">votó</span>';
-    if (g.phase === 'quest' && g.playedIds.includes(id)) tags += '<span class="tag">jugó</span>';
-    if (g.phase === 'end') {
-      const r = g.roles[id]; const evil = ['assassin', 'morgana', 'mordred', 'oberon', 'minion'].includes(r);
-      tags += `<span class="tag ${evil ? 'evil' : 'good'}">${ROLE_NAMES[r]}</span>`;
-    }
-    let cls = '';
-    const canPick = (listMode === 'team') || (listMode === 'assassin' && id !== S.meId && !(g.me.night?.ids || []).includes(id));
-    if (canPick) cls += ' clickable';
-    if (selected.has(id)) cls += ' sel';
-    return playerRow(p, tags, cls);
-  }).join('');
-
-  $app.innerHTML = `
-    <div class="row" style="align-items:center;margin-bottom:4px"><div class="serif" style="color:var(--gold);font-size:20px">Avalon</div><div class="small muted" style="text-align:right">Sala ${S.code}</div></div>
-    ${boardHtml(g)}
-    ${lastQuestHtml}
-    ${phaseHtml}
-    <div class="card"><ul class="players">${rows}</ul></div>
-    ${g.phase !== 'end' ? roleHtml(g) : ''}
-    ${lastVoteHtml()}
-    <details class="card"><summary>Personajes en juego</summary><div class="small" style="margin-top:8px">${Object.entries(g.rolesInPlay).map(([r, c]) => `${ROLE_NAMES[r]}${c > 1 ? ' ×' + c : ''}`).join(' · ')}</div></details>`;
-
-  const role = document.getElementById('role');
-  if (role) role.onclick = () => { roleShown = !roleShown; render(); };
-  document.querySelectorAll('.players li.clickable').forEach((li) => li.onclick = () => {
-    const id = li.dataset.id;
-    if (listMode === 'assassin') selected = new Set(selected.has(id) ? [] : [id]);
-    else if (selected.has(id)) selected.delete(id);
-    else if (selected.size < g.questSizes[g.questIdx]) selected.add(id);
-    render();
-  });
-  document.querySelectorAll('[data-vote]').forEach((b) => b.onclick = () => socket.emit('vote', b.dataset.vote === '1'));
-  document.querySelectorAll('[data-card]').forEach((b) => b.onclick = () => socket.emit('questCard', b.dataset.card === '1'));
-  const pr = document.getElementById('propose'); if (pr) pr.onclick = () => socket.emit('propose', [...selected]);
-  const k = document.getElementById('kill'); if (k) k.onclick = () => socket.emit('assassinate', [...selected][0]);
-  const a = document.getElementById('again'); if (a) a.onclick = () => socket.emit('backToLobby');
-}
-
-render();
-</script>
+<div id="ov"></div>
+<script src="art.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
