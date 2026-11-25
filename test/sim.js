@@ -56,8 +56,65 @@ async function playGame(n, strategy) {
   throw new Error('La partida no terminó');
 }
 
+// Celulares que se apagan, cambian de navegador o se quedan sin batería
+async function reconnectTests() {
+  const names = ['Ana', 'Beto', 'Caro', 'Dani', 'Eli'];
+  const c = await call({ action: 'create', name: names[0] });
+  const code = c.state.code;
+  const tokens = [c.token];
+  for (const n of names.slice(1)) tokens.push((await call({ action: 'join', code, name: n })).token);
+  await call({ action: 'start', code, token: tokens[0] });
+
+  // Mismo dispositivo: vuelve con su token sin pedir nada
+  const again = await call({ action: 'join', code, token: tokens[2] });
+  assert.strictEqual(again.token, tokens[2]);
+
+  const before = await view(code, tokens[2]);
+  assert.ok(before.presence.online.includes(before.meId), 'figura conectado');
+
+  // Otro dispositivo: entra con el mismo nombre (sin token) → queda pendiente
+  const req = await call({ action: 'join', code, name: 'caro' });
+  assert.strictEqual(req.pending, true);
+  assert.strictEqual((await view(code, req.token)).pending, true);
+  const hostView = await view(code, tokens[0]);
+  assert.strictEqual(hostView.requests.length, 1, 'el anfitrión ve el pedido');
+  assert.strictEqual((await view(code, tokens[1])).requests.length, 0, 'los demás no');
+  await assert.rejects(call({ action: 'resolveRequest', code, token: tokens[1], requestId: hostView.requests[0].id, approve: true }), /anfitrión/);
+
+  // El anfitrión acepta: recupera su lugar y su carta; el dispositivo viejo queda afuera
+  await call({ action: 'resolveRequest', code, token: tokens[0], requestId: hostView.requests[0].id, approve: true });
+  const after = await view(code, req.token);
+  assert.strictEqual(after.meId, before.meId);
+  assert.strictEqual(after.game.me.role, before.game.me.role);
+  const old = await fetch(`${BASE}/api/room?code=${code}&token=${tokens[2]}`);
+  assert.strictEqual(old.status, 410);
+  assert.match((await old.json()).error, /otro dispositivo/);
+  console.log('✓ recuperar el lugar desde otro dispositivo (con aprobación del anfitrión)');
+
+  // El anfitrión rechaza: el pedido queda afuera
+  const req2 = await call({ action: 'join', code, name: 'Dani' });
+  const rid = (await view(code, tokens[0])).requests[0].id;
+  await call({ action: 'resolveRequest', code, token: tokens[0], requestId: rid, approve: false });
+  assert.strictEqual((await fetch(`${BASE}/api/room?code=${code}&token=${req2.token}`)).status, 410);
+  assert.ok((await view(code, tokens[3])).meId, 'el Dani original sigue jugando');
+  console.log('✓ rechazar un pedido no afecta al jugador original');
+
+  // Anfitrión desconectado: otro puede hacer sus acciones y pasa a ser el anfitrión
+  if (!process.env.BASE_URL) {
+    await assert.rejects(call({ action: 'backToLobby', code, token: tokens[1] }), /anfitrión/);
+    await sleep(1700); // el anfitrión no consulta durante este tiempo
+    const v = await view(code, tokens[1]);
+    assert.strictEqual(v.presence.hostAway, true);
+    assert.ok(!v.presence.online.includes(v.hostId), 'el anfitrión figura desconectado');
+    assert.strictEqual(v.requests.length, 0);
+    const res = await call({ action: 'backToLobby', code, token: tokens[1] });
+    assert.strictEqual(res.state.hostId, v.meId);
+    console.log('✓ si el anfitrión desaparece, otro jugador toma su lugar');
+  }
+}
+
 (async () => {
-  const srv = process.env.BASE_URL ? null : spawn('node', ['dev.js'], { env: { ...process.env, PORT, UPSTASH_REDIS_REST_URL: '', KV_REST_API_URL: '', REDIS_URL: '' }, stdio: 'ignore' });
+  const srv = process.env.BASE_URL ? null : spawn('node', ['dev.js'], { env: { ...process.env, PORT, UPSTASH_REDIS_REST_URL: '', KV_REST_API_URL: '', REDIS_URL: '', AVALON_HOST_AWAY_MS: '1500', AVALON_ONLINE_MS: '1000' }, stdio: 'ignore' });
   if (srv) await sleep(700);
   try {
     let r = await playGame(5, { vote: true, evilCard: false });
@@ -81,6 +138,8 @@ async function playGame(n, strategy) {
     const bad = await fetch(`${BASE}/api/room?code=${r.code}&token=falso`);
     assert.strictEqual(bad.status, 410);
     console.log('✓ no se puede entrar a una partida empezada ni espiar sin token');
+
+    await reconnectTests();
     console.log('Todo OK');
   } catch (e) {
     console.error('FALLÓ:', e.message);

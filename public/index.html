@@ -476,6 +476,20 @@
   @keyframes burst { 0% { transform: translate(-50%, -50%) scale(0); opacity: 1; } 70% { opacity: .8; } 100% { transform: translate(-50%, -50%) scale(18); opacity: 0; } }
   @keyframes rise-sword { 0% { opacity: 0; transform: translate(-50%, 70px); } 100% { opacity: .55; transform: translate(-50%, 0); } }
   @keyframes sword-glow { 0%, 100% { filter: drop-shadow(0 0 6px #fff6d8); } 50% { filter: drop-shadow(0 0 18px #ffd970); } }
+
+  /* ---- Conexión ---- */
+  .players li.off .shield { filter: grayscale(1) opacity(.55); }
+  .players li.off .name { color: #8a7a60; font-style: italic; }
+  .offline-note { display: flex; gap: 6px; align-items: flex-start; margin-top: 6px; padding: 6px 8px; border-radius: 4px; font-size: 14px; line-height: 1.25;
+    color: #6b2a10; background: #a3201b14; border: 1px dashed #a3201b66; }
+  .fab .offline-note { color: #f1d9a8; background: #a3201b33; border-color: #a3201b88; margin: 0 0 8px; }
+  .offline-note .ico { flex: none; margin-top: 1px; }
+  #req { position: fixed; z-index: 40; left: 0; right: 0; top: calc(56px + env(safe-area-inset-top)); padding: 0 12px; display: flex; justify-content: center; animation: rise .3s ease-out; }
+  #req .req { width: 100%; max-width: 480px; margin: 0; border: 2px solid var(--gold-d); box-shadow: 0 12px 40px #000e, inset 0 0 28px #8a6a3a77; }
+  .req-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .req-btns .btn { flex: 1; display: block; width: auto; }
+  .pending .hourglass { font-size: 34px; margin: 10px 0; animation: spin-h 2.4s ease-in-out infinite; }
+  @keyframes spin-h { 0%, 40% { transform: rotate(0); } 50%, 90% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>

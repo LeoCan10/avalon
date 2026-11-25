@@ -59,9 +59,12 @@ function toast(msg, info) {
 const POLL_MS = 1500;
 let busy = false;
 
+let PENDING = null; // pedido para recuperar el lugar desde otro dispositivo
+
 function applyState(s) {
   if (S && s.ver < S.ver) return;
   const prev = S;
+  if (PENDING) { PENDING = null; toast('¡Recuperaste tu lugar!', true); SFX.approve(); }
   const key = s.game ? s.game.phase + s.game.questIdx + s.game.leader + s.game.rejections : 'lobby';
   if (key !== lastPhaseKey) { selected = new Set(); lastPhaseKey = key; }
   S = s;
@@ -69,8 +72,16 @@ function applyState(s) {
   render();
 }
 
+// La presencia llega en cada consulta aunque la sala no cambie; sólo se redibuja si cambió
+function applyPresence(p) {
+  if (!S || !p) return;
+  if (JSON.stringify(p) === JSON.stringify(S.presence)) return;
+  S.presence = p;
+  render();
+}
+
 function forgetRoom(msg) {
-  store.del('avalon.code'); store.del('avalon.token'); S = null; seen = null;
+  store.del('avalon.code'); store.del('avalon.token'); S = null; seen = null; PENDING = null;
   history.replaceState(null, '', '/');
   closeAllOverlays();
   if (msg) toast(msg);
@@ -91,6 +102,14 @@ async function send(action, arg) {
     });
     const data = await r.json();
     if (!r.ok) return toast(data.error || 'Error');
+    if (data.pending) {
+      // Ya había alguien con ese nombre: queda esperando que el anfitrión lo deje volver
+      store.set('avalon.code', data.code); store.set('avalon.token', data.token);
+      history.replaceState(null, '', '?sala=' + data.code);
+      PENDING = data;
+      render();
+      return;
+    }
     if (data.token) {
       store.set('avalon.code', data.state.code); store.set('avalon.token', data.token);
       history.replaceState(null, '', '?sala=' + data.state.code);
@@ -106,9 +125,14 @@ async function poll() {
   try {
     const r = await fetch(`/api/room?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}&ver=${S ? S.ver : ''}`);
     const data = await r.json();
-    if (r.status === 410) return forgetRoom(S ? 'Te sacaron de la sala' : null);
-    if (!r.ok) { if (data.error === 'No existe esa sala') forgetRoom(S ? 'La sala expiró' : null); return; }
-    if (!data.same) applyState(data);
+    if (r.status === 410) {
+      if (PENDING) return forgetRoom('El anfitrión no aceptó tu pedido');
+      return forgetRoom(S ? (data.error === 'Ya no estás en esta sala' ? 'Te sacaron de la sala' : data.error) : null);
+    }
+    if (!r.ok) { if (data.error === 'No existe esa sala') forgetRoom(S || PENDING ? 'La sala expiró' : null); return; }
+    if (data.pending) { if (!PENDING) { PENDING = data; render(); } return; }
+    if (data.same) applyPresence(data.presence);
+    else applyState(data);
   } catch {}
 }
 setInterval(poll, POLL_MS);
@@ -312,13 +336,74 @@ function endOverlay(el, close, g) {
 function render() {
   $fab.innerHTML = '';
   renderAudioControls();
-  document.body.dataset.screen = !S ? (showGallery ? 'gallery' : 'home') : !S.game ? 'lobby' : 'game';
+  renderRequests();
+  updateWakeLock();
+  document.body.dataset.screen = PENDING ? 'home' : !S ? (showGallery ? 'gallery' : 'home') : !S.game ? 'lobby' : 'game';
+  if (PENDING) return renderPending();
   if (!S && showGallery) return renderGallery();
   if (!S) return renderHome();
   if (!S.game) return renderLobby();
   renderGame();
 }
 const setFab = (html) => ($fab.innerHTML = `<div class="fab">${html}</div>`);
+
+// ---- Conexión de los jugadores ----
+const isOn = (id) => !S?.presence || S.presence.online.includes(id);
+const hostAwayNow = () => !!S?.presence?.hostAway && S.hostId !== S.meId;
+const canManage = () => S.hostId === S.meId || !!S.presence?.hostAway;
+const ICON_OFF = `<svg viewBox="0 0 24 24" class="ico"><path d="M15 4a8 8 0 1 0 5 13 7 7 0 0 1-5-13z" fill="#8a7a60"/><text x="17" y="9" font-size="7" font-family="Cinzel" font-weight="800" fill="#8a7a60">z</text></svg>`;
+function waitingOffline(ids) {
+  const off = ids.filter((id) => !isOn(id));
+  if (!off.length) return '';
+  return `<div class="offline-note">${ICON_OFF} Esperando a ${off.map(nameOf).join(', ')}, que ${off.length > 1 ? 'están desconectados' : 'está desconectado/a'}. Si cambió de celular, que vuelva a entrar con el mismo nombre.</div>`;
+}
+const hostAwayNote = (what) => hostAwayNow() ? `<div class="offline-note">${ICON_OFF} El anfitrión está desconectado: podés ${what} vos.</div>` : '';
+
+// ---- Pedido para volver desde otro dispositivo ----
+function renderPending() {
+  $app.innerHTML = `
+    <div class="hero">${ART.castle}</div>
+    <div class="scroll center pending">
+      <div class="deco" style="font-size:24px;color:var(--ink)">Pedido enviado</div>
+      ${rule}
+      <div>Ya hay un <b>${esc(PENDING.name)}</b> en la sala <b>${esc(PENDING.code)}</b>.</div>
+      <div class="small muted it" style="margin-top:6px">Si sos vos desde otro celular o navegador, ${PENDING.hostName ? `<b>${esc(PENDING.hostName)}</b>` : 'el anfitrión'} tiene que aceptarlo en su pantalla y vas a recuperar tu lugar y tu carta.</div>
+      <div class="hourglass">⌛</div>
+      <button class="btn dark" id="cancel">Cancelar</button>
+    </div>`;
+  document.getElementById('cancel').onclick = () => forgetRoom();
+}
+
+// Cartel para el anfitrión (o para todos si el anfitrión no está): alguien quiere volver
+function renderRequests() {
+  let box = document.getElementById('req');
+  const reqs = (!PENDING && S?.requests) || [];
+  if (!reqs.length) { if (box) box.remove(); return; }
+  if (!box) {
+    box = document.createElement('div'); box.id = 'req';
+    document.body.appendChild(box);
+    box.onclick = (e) => { const b = e.target.closest('button'); if (b) send('resolveRequest', { requestId: b.dataset.req, approve: b.dataset.ok === '1' }); };
+    SFX.yourTurn();
+  }
+  const r = reqs[0];
+  box.innerHTML = `<div class="req scroll">
+    <div><b>${esc(r.name)}</b> quiere volver a entrar desde otro dispositivo.</div>
+    <div class="small muted it">Si aceptás, recupera su lugar y su carta, y su dispositivo anterior queda afuera.</div>
+    <div class="req-btns"><button class="btn small" data-req="${r.id}" data-ok="1">Dejarlo volver</button><button class="btn dark small" data-req="${r.id}" data-ok="0">No es él/ella</button></div></div>`;
+}
+
+// Mantener la pantalla encendida durante la partida (si el navegador lo permite)
+let wakeLock = null;
+async function updateWakeLock() {
+  const want = !!S?.game && S.game.phase !== 'end' && !document.hidden;
+  try {
+    if (want && !wakeLock && navigator.wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } else if (!want && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch { wakeLock = null; }
+}
+document.addEventListener('visibilitychange', updateWakeLock);
 
 // ---- Botones de música y sonido (fijos arriba a la derecha) ----
 const ICON_MUSIC = `<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="17.5" cy="16" r="2.8" fill="currentColor"/></svg>`;
@@ -446,7 +531,8 @@ function renderHome() {
 
 function playerRow(p, extra = '', cls = '') {
   const me = p.id === S.meId;
-  return `<li class="${cls}${me ? ' me' : ''}" data-id="${p.id}" ${me ? 'title="Vos"' : ''}>${ART.shield(p.name)}<span class="name">${esc(p.name)}</span>${extra}</li>`;
+  const off = !me && !isOn(p.id);
+  return `<li class="${cls}${me ? ' me' : ''}${off ? ' off' : ''}" data-id="${p.id}" title="${me ? 'Vos' : off ? 'Desconectado' : ''}">${ART.shield(p.name)}<span class="name">${esc(p.name)}</span>${off ? `<span class="ic">${ICON_OFF}</span>` : ''}${extra}</li>`;
 }
 
 function topbar(right = '') {
@@ -454,7 +540,7 @@ function topbar(right = '') {
 }
 
 function renderLobby() {
-  const isHost = S.hostId === S.meId;
+  const isHost = canManage();
   const n = S.players.length;
   const o = S.options;
   const evilN = EVIL_COUNT[Math.min(Math.max(n, 5), 10)];
@@ -483,8 +569,8 @@ function renderLobby() {
       ${opt('oberon', 'Oberón', 'Malvado solitario')}
     </div>`;
   setFab(isHost
-    ? `<button class="btn" id="start" ${n < 5 || n > 10 ? 'disabled' : ''}>Comenzar la partida</button>`
-    : `<div class="wait">Esperando que el anfitrión comience…${isHost ? '' : '<br><span class="small">Sólo el anfitrión elige los personajes.</span>'}</div>`);
+    ? `${hostAwayNote('comenzar la partida')}<button class="btn" id="start" ${n < 5 || n > 10 ? 'disabled' : ''}>Comenzar la partida</button>`
+    : `<div class="wait">Esperando que el anfitrión comience…<br><span class="small">Sólo el anfitrión elige los personajes.</span></div>`);
 
   document.getElementById('share').onclick = async () => {
     try {
@@ -545,7 +631,7 @@ function renderGame() {
     case 'team': {
       const size = g.questSizes[g.questIdx];
       phase = `<h2>Misión ${g.questIdx + 1} · equipo de ${size}</h2>
-        <div class="who">${isLeader ? `<b>Sos el líder.</b> Tocá ${size} caballeros para la misión.` : `<b>${nameOf(g.leader)}</b> está eligiendo el equipo…`}</div>`;
+        <div class="who">${isLeader ? `<b>Sos el líder.</b> Tocá ${size} caballeros para la misión.` : `<b>${nameOf(g.leader)}</b> está eligiendo el equipo…`}</div>${waitingOffline([g.leader])}`;
       if (isLeader) {
         listMode = 'team';
         setFab(`<button class="btn" id="propose" ${selected.size !== size ? 'disabled' : ''}>Proponer equipo (${selected.size}/${size})</button>`);
@@ -554,7 +640,7 @@ function renderGame() {
     }
     case 'vote': {
       phase = `<h2>Votación</h2><div class="who"><b>${nameOf(g.leader)}</b> propone a <b>${list(g.team)}</b></div>
-        <div class="small muted it">Votaron ${g.votedIds.length} de ${g.order.length}${g.rejections === 4 ? ' · <span style="color:var(--red)">¡si se rechaza, gana el mal!</span>' : ''}</div>`;
+        <div class="small muted it">Votaron ${g.votedIds.length} de ${g.order.length}${g.rejections === 4 ? ' · <span style="color:var(--red)">¡si se rechaza, gana el mal!</span>' : ''}</div>${waitingOffline(g.order.filter((id) => !g.votedIds.includes(id)))}`;
       setFab(g.myVote === null
         ? `<div class="choice"><button data-vote="1">${ART.seal(true)}Aprobar</button><button data-vote="0">${ART.seal(false)}Rechazar</button></div>`
         : `<div class="wait">Sellaste tu voto: <b>${g.myVote ? 'Aprobar' : 'Rechazar'}</b>. Esperando al resto…</div>`);
@@ -563,7 +649,7 @@ function renderGame() {
     case 'quest': {
       const inTeam = g.team.includes(S.meId);
       phase = `<h2>Misión ${g.questIdx + 1} en marcha</h2><div class="who">Partieron <b>${list(g.team)}</b></div>
-        <div class="small muted it">Cartas jugadas: ${g.playedIds.length} de ${g.team.length}</div>`;
+        <div class="small muted it">Cartas jugadas: ${g.playedIds.length} de ${g.team.length}</div>${waitingOffline(g.team.filter((id) => !g.playedIds.includes(id)))}`;
       if (inTeam && !g.myCardPlayed) {
         const good = g.me.team === 'good';
         setFab(`<div class="choice cards"><button data-card="1"><span class="qcard">${ART.questCard(true)}</span></button><button data-card="0" ${good ? 'disabled' : ''}><span class="qcard">${ART.questCard(false)}</span></button></div>
@@ -573,7 +659,7 @@ function renderGame() {
     }
     case 'assassin': {
       const amAssassin = g.me?.role === 'assassin';
-      phase = `<h2>¡El bien ganó tres misiones!</h2><div class="who"><b>${nameOf(g.assassin)}</b> es el Asesino. Los malvados deliberan en voz alta: ¿quién es Merlín?</div>`;
+      phase = `<h2>¡El bien ganó tres misiones!</h2><div class="who"><b>${nameOf(g.assassin)}</b> es el Asesino. Los malvados deliberan en voz alta: ¿quién es Merlín?</div>${waitingOffline([g.assassin])}`;
       if (amAssassin) {
         listMode = 'assassin';
         setFab(`<button class="btn" id="kill" style="background:linear-gradient(180deg,#e04a3a,#7a1410);color:#fff;text-shadow:none" ${selected.size !== 1 ? 'disabled' : ''}>${selected.size ? 'Asesinar a ' + nameOf([...selected][0]) : 'Elegí a tu víctima'}</button>`);
@@ -581,10 +667,10 @@ function renderGame() {
       break;
     }
     case 'end': {
-      const isHost = S.hostId === S.meId;
+      const isHost = canManage();
       phase = `<div class="center"><div class="deco" style="font-size:26px;color:${g.winner === 'good' ? 'var(--blue)' : 'var(--red)'}">${g.winner === 'good' ? 'Gana el Bien' : 'Gana el Mal'}</div>
         <div class="it">${esc(g.winReason)}${g.assassinTarget ? ` · el Asesino señaló a ${nameOf(g.assassinTarget)}` : ''}</div></div>`;
-      setFab(isHost ? `<button class="btn" id="again">Volver a la sala</button>` : `<div class="wait">Esperando al anfitrión…</div>`);
+      setFab(isHost ? `${hostAwayNote('volver a la sala')}<button class="btn" id="again">Volver a la sala</button>` : `<div class="wait">Esperando al anfitrión…</div>`);
       break;
     }
   }
