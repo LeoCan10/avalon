@@ -1,5 +1,7 @@
 # Avalon
 
+Jugar: https://avalon-juego.vercel.app
+
 Versión web de *The Resistance: Avalon* para jugar en persona con amigos: cada uno usa su celular y la charla es en voz alta.
 
 - Salas con código de 4 letras, de 5 a 10 jugadores.
