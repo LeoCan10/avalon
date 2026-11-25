@@ -282,15 +282,28 @@ function questOverlay(el, close, result, idx) {
 
 function endOverlay(el, close, g) {
   const good = g.winner === 'good';
+  const isEvil = (id) => EVIL.includes(g.roles[id]);
+  const title = good ? 'La luz prevalece' : 'La oscuridad reina';
+  const kicker = good ? 'Gana el Bien' : 'Gana el Mal';
+  const reason = `${esc(g.winReason)}${g.assassinTarget ? `. El Asesino señaló a ${nameOf(g.assassinTarget)}.` : '.'}`;
+  const crows = good ? '' : Array.from({ length: 6 }, (_, i) =>
+    `<span class="crow" style="top:${8 + Math.random() * 45}%;animation-delay:${0.9 + i * 0.55 + Math.random() * 0.4}s;animation-duration:${4.5 + Math.random() * 2.5}s;--s:${0.6 + Math.random() * 0.7}">${ART.crow}</span>`).join('');
+  el.classList.add(good ? 'end-good' : 'end-evil');
   el.innerHTML = `
-    <div class="ov-title" style="font-size:36px;color:${good ? '#9cc8ff' : '#ff7a6a'}">${good ? 'Gana el Bien' : 'Gana el Mal'}</div>
-    <div class="ov-sub">${esc(g.winReason)}${g.assassinTarget ? `. El Asesino señaló a ${nameOf(g.assassinTarget)}.` : '.'}</div>
-    <div class="end-grid">${g.order.map((id, i) => `
-      <div class="pc ${id === g.assassinTarget ? 'target' : ''}" style="animation-delay:${0.4 + i * 0.12}s">${ART.card(g.roles[id])}<div class="pn">${nameOf(id)}</div></div>`).join('')}</div>
-    <button class="btn" data-close>Ver el tablero</button>
-    <div class="fx">${particles(good ? 'gold' : 'embers', 40)}</div>`;
-  if (navigator.vibrate) navigator.vibrate([40, 60, 40, 60, 120]);
-  Music.duck(5);
+    <div class="end-scene">${good ? '<div class="rays"></div><div class="burst"></div>' : '<div class="flash"></div><div class="beat"></div><div class="fog"></div>'}${crows}</div>
+    <div class="end-emblem">${good ? ART.excalibur : ART.darkCrown}</div>
+    <div class="end-kicker">${kicker}</div>
+    <div class="end-title">${title}</div>
+    <div class="ov-sub end-sub">${reason}</div>
+    <div class="end-grid">${g.order.map((id, i) => {
+      const win = good !== isEvil(id);
+      return `<div class="pc ${win ? 'win' : 'lose'} ${id === g.assassinTarget ? 'target' : ''}" style="animation-delay:${2 + i * 0.12}s">${ART.card(g.roles[id])}<div class="pn">${nameOf(id)}</div></div>`;
+    }).join('')}</div>
+    <button class="btn end-btn" data-close>Ver el tablero</button>
+    <div class="fx">${particles(good ? 'gold' : 'embers', good ? 46 : 36)}</div>`;
+  if (navigator.vibrate) navigator.vibrate(good ? [30, 50, 30, 50, 200] : [0, 600, 120, 120, 60, 500, 120, 120, 60]);
+  if (!good) setTimeout(() => el.classList.add('shake'), 600);
+  Music.duck(good ? 6 : 8);
   SFX.victory(good);
   el.querySelector('[data-close]').onclick = close;
 }

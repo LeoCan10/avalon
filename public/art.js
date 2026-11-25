@@ -205,5 +205,40 @@
     return `<svg viewBox="0 0 24 30" class="shield"><path d="M2 2h20v10c0 8-5 13-10 16C7 25 2 20 2 12z" fill="${c}" stroke="${GOLD}" stroke-width="1.2"/>${deco}<text x="12" y="17" text-anchor="middle" font-family="Cinzel, serif" font-weight="800" font-size="11" fill="#f6e7bd">${ch}</text></svg>`;
   }
 
-  window.ART = { card, questCard, seal, icon, castle, shield, PALETTE };
+
+  // ---- Escenas de los finales ----
+  // Excalibur saliendo del lago, con resplandor
+  const excalibur = `<svg viewBox="0 0 200 260" class="excalibur">
+    <defs><radialGradient id="exg"><stop offset="0" stop-color="#fff6d8" stop-opacity=".9"/><stop offset=".4" stop-color="#e7c36a" stop-opacity=".35"/><stop offset="1" stop-color="#e7c36a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="exb" x1="0" x2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#dfe6f0"/><stop offset="1" stop-color="#9aa6b8"/></linearGradient></defs>
+    <circle cx="100" cy="95" r="95" fill="url(#exg)"/>
+    <g class="ex-sword">
+      <path d="M94 30h12v140l-6 16-6-16z" fill="url(#exb)" stroke="#8a93a0" stroke-width="1"/>
+      <path d="M100 32v150" stroke="#fff" stroke-width="1.2" opacity=".8"/>
+      <path d="M64 170h72l-6 10H70z" fill="#e7c36a" stroke="#9c7330" stroke-width="2"/>
+      <circle cx="100" cy="175" r="5" fill="#2c64a8" stroke="#fff6d8"/>
+      <rect x="95" y="180" width="10" height="34" rx="3" fill="#5b3a1e"/>
+      <path d="M95 186h10M95 194h10M95 202h10" stroke="#e7c36a" stroke-width="1.5"/>
+      <circle cx="100" cy="220" r="8" fill="#e7c36a" stroke="#9c7330" stroke-width="2"/>
+      ${sparkle(100, 24, 9, '#ffffff')}${sparkle(124, 60, 5, '#fff6d8')}${sparkle(76, 100, 4, '#fff6d8')}
+    </g>
+    <path d="M10 238c20-8 40 8 60 0s40-8 60 0 40 8 60 0" fill="none" stroke="#8ec0ff" stroke-width="3" opacity=".8" class="mist"/>
+    <path d="M0 250c25-7 45 7 70 0s45-7 65 0 45 7 65 0" fill="none" stroke="#5b9be0" stroke-width="3" opacity=".6"/>
+  </svg>`;
+
+  // Corona de Mordred, gigante y sombría
+  const darkCrown = `<svg viewBox="0 0 200 160" class="dark-crown">
+    <defs><radialGradient id="dcg"><stop offset="0" stop-color="#ff2a1a" stop-opacity=".55"/><stop offset="1" stop-color="#ff2a1a" stop-opacity="0"/></radialGradient></defs>
+    <circle cx="100" cy="90" r="80" fill="url(#dcg)"/>
+    <path d="M28 130V52l32 34 18-62 22 50 22-50 18 62 32-34v78z" fill="#0d0606" stroke="#b3141b" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="22" y="126" width="156" height="20" rx="3" fill="#160909" stroke="#b3141b" stroke-width="3"/>
+    <circle cx="100" cy="104" r="12" fill="#e01a1a" class="gem"/>
+    <circle cx="60" cy="136" r="4" fill="#e01a1a"/><circle cx="140" cy="136" r="4" fill="#e01a1a"/>
+    <path d="M100 116c0 10-6 14-6 22" stroke="#b3141b" stroke-width="3" fill="none" stroke-linecap="round" class="drip"/>
+  </svg>`;
+
+  // Cuervo en vuelo
+  const crow = `<svg viewBox="0 0 60 24" class="crow-svg"><path d="M30 14c-4-6-12-10-28-8 8 2 14 6 18 10-6 0-10 2-12 4 6-1 14-1 18 1l4 3 4-3c4-2 12-2 18-1-2-2-6-4-12-4 4-4 10-8 18-10-16-2-24 2-28 8z" fill="#050303"/></svg>`;
+
+  window.ART = { card, questCard, seal, icon, castle, shield, PALETTE, excalibur, darkCrown, crow };
 })();
