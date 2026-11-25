@@ -16,4 +16,4 @@ npm test       # simula partidas completas
 
 ## Deploy
 
-Vercel con una base Upstash Redis (variables `UPSTASH_REDIS_REST_URL`/`TOKEN` o `KV_REST_API_URL`/`TOKEN`). Las salas expiran a las 24 h.
+Vercel con una base Redis: sirve `REDIS_URL` (conexión TCP) o la API REST de Upstash (`UPSTASH_REDIS_REST_URL`/`TOKEN` o `KV_REST_API_URL`/`TOKEN`). Las salas expiran a las 24 h.

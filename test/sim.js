@@ -57,7 +57,7 @@ async function playGame(n, strategy) {
 }
 
 (async () => {
-  const srv = process.env.BASE_URL ? null : spawn('node', ['dev.js'], { env: { ...process.env, PORT, UPSTASH_REDIS_REST_URL: '', KV_REST_API_URL: '' }, stdio: 'ignore' });
+  const srv = process.env.BASE_URL ? null : spawn('node', ['dev.js'], { env: { ...process.env, PORT, UPSTASH_REDIS_REST_URL: '', KV_REST_API_URL: '', REDIS_URL: '' }, stdio: 'ignore' });
   if (srv) await sleep(700);
   try {
     let r = await playGame(5, { vote: true, evilCard: false });
