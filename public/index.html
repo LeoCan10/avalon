@@ -229,6 +229,29 @@
   .end-grid .pc.target svg { outline: 3px solid #ff5a4a; outline-offset: 2px; border-radius: 10px; }
   .end-grid .pc .pn { margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+
+  /* ---- Audio ---- */
+  .audio-ctl { position: fixed; z-index: 30; top: calc(10px + env(safe-area-inset-top)); right: 10px; display: flex; gap: 6px; }
+  .audio-ctl button { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: #8a7a60;
+    background: #1c1512dd; border: 1px solid #6b4a1d; box-shadow: 0 2px 8px #000a; transition: color .2s, border-color .2s, transform .1s; position: relative; }
+  .audio-ctl button:active { transform: scale(.92); }
+  .audio-ctl button svg { width: 19px; height: 19px; }
+  .audio-ctl button.on { color: var(--gold); border-color: var(--gold); box-shadow: 0 0 10px #e7c36a44, 0 2px 8px #000a; }
+  .audio-ctl button:not(.on)::after { content: ''; position: absolute; width: 24px; height: 2px; background: #8a7a60; transform: rotate(-45deg); }
+  .topbar { padding-right: 92px; min-height: 38px; align-items: center; }
+  .toast.info { color: var(--ink); border-color: var(--gold-d); }
+
+  /* ---- Galería ---- */
+  .gal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; }
+  .gal-card { display: flex; flex-direction: column; gap: 6px; text-align: center; color: var(--ink); line-height: 1.15; transition: transform .2s; }
+  .gal-card svg { width: 100%; display: block; filter: drop-shadow(0 5px 8px #0007); transition: transform .25s; }
+  .gal-card:hover svg, .gal-card:active svg { transform: translateY(-4px) rotate(-1.5deg); }
+  .gal-card span { font-size: 13px; }
+  .demo-btns { display: grid; gap: 10px; }
+  .gal-extra { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .gal-extra .qcard { width: 30%; } .gal-extra .qcard svg { width: 100%; display: block; filter: drop-shadow(0 5px 8px #0007); }
+  .gal-extra .seals { display: flex; flex-direction: column; gap: 6px; width: 22%; } .gal-extra .seals svg { width: 100%; }
+
   /* SVG animaciones */
   .tw { animation: twinkle 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
   .flicker { animation: flicker 1.8s infinite; }
@@ -260,6 +283,7 @@
 <div id="fab"></div>
 <div id="ov"></div>
 <script src="art.js"></script>
+<script src="sound.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

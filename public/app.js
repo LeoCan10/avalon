@@ -39,15 +39,18 @@ const store = {
   del(k) { try { localStorage.removeItem(k); } catch {} },
 };
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const nameOf = (id) => esc(S.players.find((p) => p.id === id)?.name ?? '¿?');
-const rawName = (id) => S.players.find((p) => p.id === id)?.name ?? '?';
+// Jugadores ficticios para la galería de demostración
+const DEMO = { players: ['Arturo', 'Ginebra', 'Lancelot', 'Gawain', 'Tristán', 'Isolda', 'Galahad'].map((name, i) => ({ id: 'p' + i, name })) };
+let showGallery = false;
+const nameOf = (id) => esc((S || DEMO).players.find((p) => p.id === id)?.name ?? '¿?');
 const list = (ids) => ids.map(nameOf).join(', ');
 const rule = '<div class="rule"><i></i></div>';
 const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-function toast(msg) {
+function toast(msg, info) {
+  document.querySelectorAll('.toast').forEach((x) => x.remove());
   const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
+  t.className = 'toast' + (info ? ' info' : ''); t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3200);
 }
@@ -75,9 +78,11 @@ function forgetRoom(msg) {
 }
 
 const ARG = { setOptions: 'options', kick: 'target', vote: 'approve', questCard: 'success', propose: 'team', assassinate: 'target' };
+const ACTION_SOUND = { vote: 'seal', questCard: 'flip', propose: 'quill', assassinate: 'cardBad' };
 async function send(action, arg) {
   if (busy) return;
   busy = true;
+  SFX[ACTION_SOUND[action] || 'click']();
   const payload = ARG[action] ? { [ARG[action]]: arg } : { ...(arg || {}) };
   try {
     const r = await fetch('/api/room', {
@@ -134,6 +139,10 @@ function detectEvents(prev, s) {
     if (!fresh) return;
   }
   const g = s.game;
+  // Aviso con corno cuando me toca elegir el equipo
+  const myTurn = g.phase === 'team' && g.leader === s.meId;
+  const wasMyTurn = prev?.game?.phase === 'team' && prev.game.leader === s.meId && prev.game.questIdx === g.questIdx;
+  if (myTurn && !wasMyTurn) setTimeout(() => SFX.yourTurn(), ovActive || ovQueue.length ? 1500 : 0);
   if (now.vote && now.vote !== seen.vote) queueOverlay((el, close) => voteOverlay(el, close, g.lastVote, g.order));
   if (now.results > seen.results) {
     for (let i = seen.results; i < now.results; i++) queueOverlay((el, close) => questOverlay(el, close, g.results[i], i));
@@ -189,9 +198,10 @@ function flipCard(backSvg, frontSvg, cls = 'flip') {
 }
 
 // Pantalla secreta del personaje: el tema visual aparece SÓLO con la carta dada vuelta.
-function roleOverlay(el, close, intro) {
-  const me = S.game?.me;
+function roleOverlay(el, close, intro, demoMe) {
+  const me = demoMe || S?.game?.me;
   if (!me) return close();
+  if (intro) SFX.bell(3);
   const night = me.night
     ? `<div class="night"><div class="small">${esc(me.night.label)}</div><div class="names">${me.night.ids.length ? list(me.night.ids) : '—'}</div></div>`
     : '';
@@ -216,6 +226,8 @@ function roleOverlay(el, close, intro) {
     el.className = 'overlay' + (open ? ' role-' + me.role : '');
     fx.innerHTML = open ? particles(ROLE_PARTICLES[me.role], me.role === 'oberon' || me.role === 'morgana' ? 18 : 30) : '';
     tap.textContent = open ? 'Tocá la carta para ocultarla' : 'Tocá la carta para revelarla';
+    SFX.flip();
+    if (open) setTimeout(() => SFX.reveal(me.team), 250);
     if (open && navigator.vibrate) navigator.vibrate(me.team === 'evil' ? [30, 40, 30] : 20);
   };
   el.querySelector('[data-close]').onclick = close;
@@ -234,9 +246,9 @@ function voteOverlay(el, close, lv, order) {
     <div class="small night-muted">${yes} a favor · ${order.length - yes} en contra</div>
     <button class="btn dark" data-close style="opacity:0">Continuar</button>`;
   const items = [...el.querySelectorAll('.vote-item')];
-  items.forEach((it, i) => setTimeout(() => it.classList.add('show'), 500 + i * 160));
+  items.forEach((it, i) => setTimeout(() => { it.classList.add('show'); SFX.seal(); }, 500 + i * 160));
   const t = 700 + items.length * 160;
-  setTimeout(() => el.querySelector('.verdict').classList.add('show'), t);
+  setTimeout(() => { el.querySelector('.verdict').classList.add('show'); lv.approved ? SFX.approve() : SFX.reject(); }, t);
   setTimeout(() => { const b = el.querySelector('[data-close]'); b.style.opacity = 1; b.style.transition = 'opacity .4s'; }, t + 400);
   el.querySelector('[data-close]').onclick = close;
 }
@@ -254,11 +266,14 @@ function questOverlay(el, close, result, idx) {
   const flips = [...el.querySelectorAll('.mini-flip')];
   flips.forEach((f, i) => setTimeout(() => {
     f.classList.add('open');
-    if (!cards[i] && navigator.vibrate) navigator.vibrate(60);
+    SFX.flip();
+    if (!cards[i]) { setTimeout(() => SFX.cardBad(), 250); if (navigator.vibrate) navigator.vibrate(60); }
   }, 1100 + i * 750));
   const t = 1300 + flips.length * 750;
   setTimeout(() => {
     el.querySelector('.verdict').classList.add('show');
+    Music.duck(3);
+    result.success ? SFX.success() : SFX.fail();
     el.querySelector('.fx').innerHTML = particles(result.success ? 'gold' : 'embers', 30);
     for (const sel of ['[data-sum]', '[data-close]']) { const x = el.querySelector(sel); x.style.transition = 'opacity .4s'; x.style.opacity = 1; }
   }, t);
@@ -275,17 +290,98 @@ function endOverlay(el, close, g) {
     <button class="btn" data-close>Ver el tablero</button>
     <div class="fx">${particles(good ? 'gold' : 'embers', 40)}</div>`;
   if (navigator.vibrate) navigator.vibrate([40, 60, 40, 60, 120]);
+  Music.duck(5);
+  SFX.victory(good);
   el.querySelector('[data-close]').onclick = close;
 }
 
 // ================= Pantallas =================
 function render() {
   $fab.innerHTML = '';
+  renderAudioControls();
+  if (!S && showGallery) return renderGallery();
   if (!S) return renderHome();
   if (!S.game) return renderLobby();
   renderGame();
 }
 const setFab = (html) => ($fab.innerHTML = `<div class="fab"><div class="inner">${html}</div></div>`);
+
+// ---- Botones de música y sonido (fijos arriba a la derecha) ----
+const ICON_MUSIC = `<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="17.5" cy="16" r="2.8" fill="currentColor"/></svg>`;
+const ICON_SFX = `<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+function renderAudioControls() {
+  let box = document.getElementById('audio');
+  if (!box) {
+    box = document.createElement('div'); box.id = 'audio'; box.className = 'audio-ctl';
+    document.body.appendChild(box);
+    box.onclick = (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.a === 'music') Sound.setMusic(!Sound.music); else Sound.setSfx(!Sound.sfx);
+      renderAudioControls();
+      toast(b.dataset.a === 'music'
+        ? (Sound.music ? 'Música activada (mejor en un solo celular)' : 'Música apagada')
+        : (Sound.sfx ? 'Sonidos activados' : 'Sonidos apagados'), true);
+    };
+  }
+  box.innerHTML = `
+    <button data-a="music" class="${Sound.music ? 'on' : ''}" title="Música" aria-label="Música" aria-pressed="${Sound.music}">${ICON_MUSIC}</button>
+    <button data-a="sfx" class="${Sound.sfx ? 'on' : ''}" title="Sonidos" aria-label="Sonidos" aria-pressed="${Sound.sfx}">${ICON_SFX}</button>`;
+}
+
+// ---- Galería de personajes con demostraciones ----
+const DEMO_NIGHT = {
+  merlin: { label: 'Estos jugadores son malvados', ids: ['p2', 'p5'] },
+  percival: { label: 'Uno es Merlín y el otro Morgana', ids: ['p1', 'p4'] },
+  assassin: { label: 'Tus compañeros malvados', ids: ['p4', 'p6'] },
+  morgana: { label: 'Tus compañeros malvados', ids: ['p3', 'p6'] },
+  mordred: { label: 'Tus compañeros malvados', ids: ['p3', 'p4'] },
+  minion: { label: 'Tus compañeros malvados', ids: ['p3', 'p4'] },
+};
+const demoMe = (role) => ({ role, roleName: ROLE_NAMES[role], team: EVIL.includes(role) ? 'evil' : 'good', night: DEMO_NIGHT[role] || null });
+const DEMO_ORDER = DEMO.players.map((p) => p.id);
+const DEMO_ROLES = { p0: 'servant', p1: 'merlin', p2: 'percival', p3: 'assassin', p4: 'morgana', p5: 'servant', p6: 'mordred' };
+const DEMOS = {
+  vote: () => queueOverlay((el, c) => voteOverlay(el, c, { leader: 'p0', team: ['p0', 'p2', 'p4'], approved: true, votes: { p0: true, p1: true, p2: true, p3: false, p4: true, p5: false, p6: true } }, DEMO_ORDER)),
+  questOk: () => queueOverlay((el, c) => questOverlay(el, c, { success: true, fails: 0, team: ['p0', 'p1', 'p5'] }, 0)),
+  questKo: () => queueOverlay((el, c) => questOverlay(el, c, { success: false, fails: 1, team: ['p1', 'p2', 'p3', 'p5'] }, 1)),
+  winGood: () => queueOverlay((el, c) => endOverlay(el, c, { winner: 'good', winReason: 'Tres misiones exitosas y Merlín sobrevivió', assassinTarget: 'p2', order: DEMO_ORDER, roles: DEMO_ROLES })),
+  winEvil: () => queueOverlay((el, c) => endOverlay(el, c, { winner: 'evil', winReason: 'El Asesino encontró a Merlín', assassinTarget: 'p1', order: DEMO_ORDER, roles: DEMO_ROLES })),
+};
+
+function renderGallery() {
+  const GOOD = ['merlin', 'percival', 'servant'];
+  const BAD = ['assassin', 'morgana', 'mordred', 'oberon', 'minion'];
+  const cards = (roles) => `<div class="gal-grid">${roles.map((r) => `
+    <button class="gal-card" data-role="${r}">${ART.card(r)}<span class="small it">${ROLE_INFO[r].split('.')[0]}.</span></button>`).join('')}</div>`;
+  $app.innerHTML = `
+    <div class="topbar"><button class="btn dark small" id="back">← Volver</button><span class="night-muted small it">galería</span></div>
+    <div class="center" style="margin:14px 0 4px"><div class="deco" style="font-size:28px;color:var(--gold)">Los personajes</div>
+      <div class="tagline">Tocá una carta para ver la pantalla secreta de ese personaje</div></div>
+    <div class="scroll"><h2 style="color:var(--blue)">Leales a Arturo</h2>${rule}${cards(GOOD)}</div>
+    <div class="scroll"><h2 style="color:var(--red)">Secuaces de Mordred</h2>${rule}${cards(BAD)}</div>
+    <div class="scroll">
+      <h2>Así se ve una partida</h2>
+      <div class="small muted it">Ejemplos con jugadores inventados: Arturo, Ginebra, Lancelot…</div>
+      ${rule}
+      <div class="demo-btns">
+        <button class="btn dark" data-demo="vote">Una votación</button>
+        <button class="btn dark" data-demo="questOk">Una misión exitosa</button>
+        <button class="btn dark" data-demo="questKo">Una misión saboteada</button>
+        <button class="btn dark" data-demo="winGood">Final: gana el bien</button>
+        <button class="btn dark" data-demo="winEvil">Final: gana el mal</button>
+      </div>
+    </div>
+    <div class="scroll">
+      <h2>Cartas de misión y votos</h2>
+      <div class="small muted it">Los leales sólo pueden jugar Éxito. Los votos se sellan con cera.</div>
+      ${rule}
+      <div class="gal-extra"><span class="qcard">${ART.questCard(true)}</span><span class="qcard">${ART.questCard(false)}</span>
+        <span class="seals">${ART.seal(true)}${ART.seal(false)}</span></div>
+    </div>`;
+  document.getElementById('back').onclick = () => { SFX.click(); showGallery = false; scrollTo(0, 0); render(); };
+  document.querySelectorAll('[data-role]').forEach((b) => (b.onclick = () => { SFX.click(); queueOverlay((el, c) => roleOverlay(el, c, false, demoMe(b.dataset.role))); }));
+  document.querySelectorAll('[data-demo]').forEach((b) => (b.onclick = () => { SFX.click(); DEMOS[b.dataset.demo](); }));
+}
 
 function rulesHtml() {
   return `<div class="small" style="margin-top:10px">
@@ -312,7 +408,10 @@ function renderHome() {
     </div>
     <div class="or">— o bien —</div>
     <button class="btn dark" id="create">Fundar una sala nueva</button>
-    <details class="scroll" style="margin-top:26px"><summary>¿Cómo se juega?</summary>${rulesHtml()}</details>`;
+    <div class="scroll peek" id="gallery" style="margin-top:26px"><span class="thumb">${ART.card('merlin')}</span>
+      <span><span class="cz" style="font-weight:800">Galería de personajes</span><br><span class="small muted it">Conocé todas las cartas y mirá cómo se juega, sin armar una partida</span></span></div>
+    <details class="scroll"><summary>¿Cómo se juega?</summary>${rulesHtml()}</details>`;
+  document.getElementById('gallery').onclick = () => { SFX.click(); showGallery = true; scrollTo(0, 0); render(); };
   const getName = () => { const n = document.getElementById('name').value.trim(); store.set('avalon.name', n); return n; };
   document.getElementById('join').onclick = () => send('join', { name: getName(), code: document.getElementById('code').value });
   document.getElementById('create').onclick = () => send('create', { name: getName() });
@@ -480,6 +579,7 @@ function renderGame() {
     if (listMode === 'assassin') selected = new Set(selected.has(id) ? [] : [id]);
     else if (selected.has(id)) selected.delete(id);
     else if (selected.size < g.questSizes[g.questIdx]) selected.add(id);
+    SFX.click();
     render();
   }));
   document.querySelectorAll('[data-vote]').forEach((b) => (b.onclick = () => send('vote', b.dataset.vote === '1')));
